@@ -8,23 +8,24 @@
   @import url('https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@300;400;500;700&family=Syne:wght@400;600;700;800&display=swap');
 
   :root {
-    --bg: #0a0b0f;
-    --bg2: #0f1117;
-    --bg3: #161821;
-    --panel: #1a1d27;
-    --panel2: #1f2235;
-    --border: #252840;
-    --border2: #2e3250;
-    --accent: #4f6ef7;
-    --accent2: #7c3aed;
-    --accent-glow: rgba(79,110,247,0.15);
-    --green: #22d3a5;
-    --green-dim: rgba(34,211,165,0.12);
-    --red: #f05b5b;
-    --yellow: #f5a623;
-    --text: #e2e4f0;
-    --text2: #8b8fa8;
-    --text3: #555872;
+    --bg: #111417;
+    --bg2: #171b1f;
+    --bg3: #1d2227;
+    --panel: #202830;
+    --panel2: #263038;
+    --border: #2d3a44;
+    --border2: #374956;
+    --accent: #d4748f;
+    --accent2: #b88ec8;
+    --accent-glow: rgba(212,116,143,0.13);
+    --accent2-glow: rgba(184,142,200,0.12);
+    --green: #7ec8b0;
+    --green-dim: rgba(126,200,176,0.12);
+    --red: #e07070;
+    --yellow: #c8a96e;
+    --text: #dde3ea;
+    --text2: #8a9baa;
+    --text3: #4e6070;
     --mono: 'JetBrains Mono', monospace;
     --sans: 'Syne', sans-serif;
   }
@@ -54,16 +55,17 @@
   .lock-bg {
     position: absolute; inset: 0;
     background:
-      radial-gradient(ellipse 60% 50% at 20% 80%, rgba(79,110,247,0.08) 0%, transparent 60%),
-      radial-gradient(ellipse 40% 40% at 80% 20%, rgba(124,58,237,0.06) 0%, transparent 60%);
+      radial-gradient(ellipse 60% 50% at 20% 80%, rgba(212,116,143,0.08) 0%, transparent 60%),
+      radial-gradient(ellipse 40% 40% at 80% 20%, rgba(184,142,200,0.07) 0%, transparent 60%),
+      radial-gradient(ellipse 30% 40% at 50% 50%, rgba(55,73,86,0.25) 0%, transparent 70%);
     pointer-events: none;
   }
 
   .lock-grid {
     position: absolute; inset: 0;
     background-image:
-      linear-gradient(rgba(79,110,247,0.04) 1px, transparent 1px),
-      linear-gradient(90deg, rgba(79,110,247,0.04) 1px, transparent 1px);
+      linear-gradient(rgba(212,116,143,0.04) 1px, transparent 1px),
+      linear-gradient(90deg, rgba(184,142,200,0.04) 1px, transparent 1px);
     background-size: 40px 40px;
     pointer-events: none;
   }
@@ -75,7 +77,7 @@
     border-radius: 16px;
     padding: 48px 52px;
     width: 420px;
-    box-shadow: 0 0 60px rgba(79,110,247,0.1), 0 32px 64px rgba(0,0,0,0.5);
+    box-shadow: 0 0 60px rgba(212,116,143,0.1), 0 0 120px rgba(184,142,200,0.06), 0 32px 64px rgba(0,0,0,0.5);
   }
 
   .lock-logo {
@@ -145,7 +147,7 @@
 
   .input-wrap input:focus {
     border-color: var(--accent);
-    box-shadow: 0 0 0 3px rgba(79,110,247,0.15);
+    box-shadow: 0 0 0 3px rgba(212,116,143,0.15);
   }
 
   .input-wrap .eye-btn {
@@ -179,7 +181,7 @@
     margin-bottom: 16px;
   }
 
-  .btn-primary:hover { background: #3d5ce6; box-shadow: 0 4px 20px rgba(79,110,247,0.4); }
+  .btn-primary:hover { background: #c05e7a; box-shadow: 0 4px 20px rgba(212,116,143,0.4); }
   .btn-primary:active { transform: scale(0.98); }
 
   .lock-links {
@@ -221,7 +223,7 @@
     position: fixed;
     left: 0; top: 0; bottom: 0;
     width: 240px;
-    background: var(--bg2);
+    background: linear-gradient(180deg, #161c22 0%, #171b1f 60%, #141a20 100%);
     border-right: 1px solid var(--border);
     display: flex;
     flex-direction: column;
@@ -393,7 +395,7 @@
   .page-icon {
     width: 36px; height: 36px;
     background: var(--accent-glow);
-    border: 1px solid rgba(79,110,247,0.3);
+    border: 1px solid rgba(212,116,143,0.25);
     border-radius: 8px;
     display: flex;
     align-items: center;
@@ -417,7 +419,7 @@
     gap: 6px;
   }
 
-  .btn-add:hover { background: #3d5ce6; box-shadow: 0 4px 16px rgba(79,110,247,0.35); }
+  .btn-add:hover { background: #c05e7a; box-shadow: 0 4px 16px rgba(212,116,143,0.35); }
 
   /* Cards */
   .cards-grid {
@@ -438,6 +440,7 @@
   .card:hover {
     border-color: var(--border2);
     box-shadow: 0 4px 24px rgba(0,0,0,0.3);
+    border-left-color: rgba(212,116,143,0.35);
   }
 
   .card-header {
@@ -548,9 +551,10 @@
     text-transform: uppercase;
   }
 
-  .tag-blue { background: rgba(79,110,247,0.15); color: var(--accent); }
+  .tag-blue { background: rgba(184,142,200,0.15); color: var(--accent2); }
   .tag-green { background: var(--green-dim); color: var(--green); }
-  .tag-yellow { background: rgba(245,166,35,0.12); color: var(--yellow); }
+  .tag-yellow { background: rgba(200,169,110,0.12); color: var(--yellow); }
+  .tag-rose { background: rgba(212,116,143,0.15); color: var(--accent); }
 
   /* Table cards for port maps etc */
   .port-table {
@@ -725,7 +729,7 @@
     transition: all 0.2s;
   }
 
-  .btn-save:hover { background: #3d5ce6; }
+  .btn-save:hover { background: #c05e7a; }
 
   /* Toast */
   #toast {
@@ -749,7 +753,7 @@
 
   /* Search highlight */
   .search-hidden { display: none !important; }
-  mark { background: rgba(79,110,247,0.3); color: var(--text); border-radius: 2px; }
+  mark { background: rgba(212,116,143,0.25); color: var(--text); border-radius: 2px; }
 
   /* Scrollbar */
   ::-webkit-scrollbar { width: 6px; }
@@ -1506,6 +1510,11 @@
 const enc = new TextEncoder();
 const dec = new TextDecoder();
 
+// crypto.subtle requires a secure context (https:// or localhost).
+// When opening as a local file://, we fall back to a lightweight
+// XOR + base64 approach so the app still works offline from OneDrive.
+const hasCrypto = (typeof crypto !== 'undefined' && crypto.subtle && window.isSecureContext);
+
 async function deriveKey(password, salt) {
   const keyMaterial = await crypto.subtle.importKey('raw', enc.encode(password), 'PBKDF2', false, ['deriveKey']);
   return crypto.subtle.deriveKey(
@@ -1518,16 +1527,23 @@ async function deriveKey(password, salt) {
 }
 
 async function encryptData(data, password) {
+  const json = JSON.stringify(data);
+  if (!hasCrypto) return btoa(unescape(encodeURIComponent(xorObfuscate(json, password))));
   const salt = crypto.getRandomValues(new Uint8Array(16));
   const iv = crypto.getRandomValues(new Uint8Array(12));
   const key = await deriveKey(password, salt);
-  const ct = await crypto.subtle.encrypt({ name: 'AES-GCM', iv }, key, enc.encode(JSON.stringify(data)));
+  const ct = await crypto.subtle.encrypt({ name: 'AES-GCM', iv }, key, enc.encode(json));
   const buf = new Uint8Array(salt.length + iv.length + ct.byteLength);
   buf.set(salt, 0); buf.set(iv, 16); buf.set(new Uint8Array(ct), 28);
   return btoa(String.fromCharCode(...buf));
 }
 
 async function decryptData(b64, password) {
+  if (!hasCrypto) {
+    try {
+      return JSON.parse(xorObfuscate(decodeURIComponent(escape(atob(b64))), password));
+    } catch { throw new Error('Decrypt failed'); }
+  }
   const buf = Uint8Array.from(atob(b64), c => c.charCodeAt(0));
   const salt = buf.slice(0, 16);
   const iv = buf.slice(16, 28);
@@ -1537,7 +1553,24 @@ async function decryptData(b64, password) {
   return JSON.parse(dec.decode(pt));
 }
 
+// Simple XOR obfuscation used only when crypto.subtle is unavailable (file://)
+function xorObfuscate(text, key) {
+  let out = '';
+  for (let i = 0; i < text.length; i++) {
+    out += String.fromCharCode(text.charCodeAt(i) ^ key.charCodeAt(i % key.length));
+  }
+  return out;
+}
+
 async function hashPassword(pw) {
+  if (!hasCrypto) {
+    // Simple deterministic hash for file:// fallback
+    let h = 0x811c9dc5;
+    for (let i = 0; i < pw.length; i++) { h ^= pw.charCodeAt(i); h = (h * 0x01000193) >>> 0; }
+    // Multiple rounds for a tiny bit of stretch
+    for (let r = 0; r < 1000; r++) { h ^= (h >>> 16); h = (h * 0x45d9f3b) >>> 0; }
+    return 'local_' + h.toString(16).padStart(8, '0') + '_' + btoa(pw.split('').reverse().join('')).slice(0,12);
+  }
   const h = await crypto.subtle.digest('SHA-256', enc.encode(pw));
   return btoa(String.fromCharCode(...new Uint8Array(h)));
 }
@@ -1680,7 +1713,7 @@ async function doReset() {
 
 function unlockApp() {
   document.getElementById('lock-screen').style.display = 'none';
-  document.getElementById('app').style.display = '';
+  document.getElementById('app').style.display = 'block';
   renderAll();
 }
 
@@ -2003,8 +2036,7 @@ function renderEmail() {
       <div class="card-header">
         <div>
           <div class="card-title">${escHtml(d.address)}</div>
-          <div class="card-subtitle"><span class="tag ${d.ssl === 'Yes (Recommended)' ? 'tag-green' : 'tag-yellow'}">${d.ssl === 'Yes (Recommended)' ? 'SSL/TLS' : 'Non-SSL'}</span></div>
-        </div>
+          <div class="card-subtitle"><span class="tag ${d.ssl === 'Yes (Recommended)' ? 'tag-green' : 'tag-yellow'}">${d.ssl === 'Yes (Recommended)' ? 'SSL/TLS' : 'Non-SSL'}</span></div>        </div>
         ${cardActions(d.id, 'emails', 'editEmail')}
       </div>
       ${secretField('pass', d.pass, 'Password')}
