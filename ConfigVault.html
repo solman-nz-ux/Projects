@@ -1952,8 +1952,16 @@ function copyVal(val) {
   navigator.clipboard.writeText(val).then(() => showToast('Copied to clipboard!'));
 }
 
-function openModal(id, clearFn) {
-  document.getElementById(id).classList.add('open');
+function openModal(id, skipClear) {
+  const modal = document.getElementById(id);
+  // Unless called from an edit function (skipClear=true), reset all fields
+  // so a previous edit's ID doesn't leak into the next "Add" action
+  if (!skipClear) {
+    modal.querySelectorAll('input[type="hidden"]').forEach(el => el.value = '');
+    modal.querySelectorAll('input:not([type="hidden"]), textarea').forEach(el => el.value = '');
+    modal.querySelectorAll('select').forEach(el => el.selectedIndex = 0);
+  }
+  modal.classList.add('open');
 }
 
 function closeModal(id) {
@@ -2091,7 +2099,7 @@ function editNetworkDevice(id) {
   document.getElementById('nd-wifi-pass').value = d.wifiPass || '';
   document.getElementById('nd-notes').value = d.notes || '';
   document.getElementById('nd-ports').value = d.ports || '';
-  openModal('network-device-modal');
+  openModal('network-device-modal', true);
 }
 
 // ── ISP ──────────────────────────────────────────────────────
@@ -2151,7 +2159,7 @@ function editISP(id) {
   });
   document.getElementById('isp-type').value = d.type || 'Fibre';
   document.getElementById('isp-ppp-pass').value = d.pppPass || '';
-  openModal('isp-modal');
+  openModal('isp-modal', true);
 }
 
 // ── SMART LOCK ───────────────────────────────────────────────
@@ -2211,7 +2219,7 @@ function editLock(id) {
   document.getElementById('lock-email').value = d.email || '';
   document.getElementById('lock-pass').value = d.pass || '';
   document.getElementById('lock-pins').value = d.pins || '';
-  openModal('lock-modal');
+  openModal('lock-modal', true);
 }
 
 // ── EMAIL ────────────────────────────────────────────────────
@@ -2271,7 +2279,7 @@ function editEmail(id) {
   document.getElementById('em-ssl').value = d.ssl || 'Yes (Recommended)';
   document.getElementById('em-datafile').value = d.datafile || '';
   document.getElementById('em-notes').value = d.notes || '';
-  openModal('email-modal');
+  openModal('email-modal', true);
 }
 
 // ── FAMILY ───────────────────────────────────────────────────
@@ -2374,7 +2382,7 @@ function editFamilyAccount(id) {
   document.getElementById('fa-device').value = d.device || '';
   document.getElementById('fa-sq').value = d.sq || '';
   document.getElementById('fa-notes').value = d.notes || '';
-  openModal('family-modal');
+  openModal('family-modal', true);
 }
 
 // ── SERVICES ─────────────────────────────────────────────────
@@ -2426,7 +2434,7 @@ function editService(id) {
   document.getElementById('svc-pass').value = d.pass || '';
   document.getElementById('svc-acct').value = d.acct || '';
   document.getElementById('svc-notes').value = d.notes || '';
-  openModal('service-modal');
+  openModal('service-modal', true);
 }
 
 // ── HEALTH ───────────────────────────────────────────────────
@@ -2477,7 +2485,7 @@ function editHealth(id) {
   document.getElementById('hp-pass').value = d.pass || '';
   document.getElementById('hp-url').value = d.url || '';
   document.getElementById('hp-notes').value = d.notes || '';
-  openModal('health-modal');
+  openModal('health-modal', true);
 }
 
 // ── SCHOOL ───────────────────────────────────────────────────
@@ -2531,7 +2539,7 @@ function editSchool(id) {
   document.getElementById('sp-pin').value = d.pin || '';
   document.getElementById('sp-url').value = d.url || '';
   document.getElementById('sp-notes').value = d.notes || '';
-  openModal('school-modal');
+  openModal('school-modal', true);
 }
 
 // ── RENDER ALL ───────────────────────────────────────────────
@@ -3286,7 +3294,7 @@ function openGithubSettings() {
   document.getElementById('gh-repo-input').value = cfg ? cfg.repo : 'solman-nz-ux/Projects';
   document.getElementById('gh-path-input').value = cfg ? cfg.path : 'vault/configvault.enc';
   document.getElementById('gh-test-result').style.display = 'none';
-  openModal('github-modal');
+  openModal('github-modal', true);
 }
 
 async function testGithubConnection() {
