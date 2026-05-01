@@ -1,0 +1,3358 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>ConfigVault</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@300;400;500;700&family=Syne:wght@400;600;700;800&display=swap');
+
+  :root {
+    --bg: #111417;
+    --bg2: #171b1f;
+    --bg3: #1d2227;
+    --panel: #202830;
+    --panel2: #263038;
+    --border: #2d3a44;
+    --border2: #374956;
+    --accent: #d4748f;
+    --accent2: #b88ec8;
+    --accent-glow: rgba(212,116,143,0.13);
+    --accent2-glow: rgba(184,142,200,0.12);
+    --green: #7ec8b0;
+    --green-dim: rgba(126,200,176,0.12);
+    --red: #e07070;
+    --yellow: #c8a96e;
+    --text: #dde3ea;
+    --text2: #8a9baa;
+    --text3: #4e6070;
+    --mono: 'JetBrains Mono', monospace;
+    --sans: 'Syne', sans-serif;
+  }
+
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: var(--mono);
+    min-height: 100vh;
+    overflow-x: hidden;
+  }
+
+  /* ── LOCK SCREEN ── */
+  #lock-screen {
+    position: fixed; inset: 0;
+    background: var(--bg);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    z-index: 1000;
+    gap: 0;
+  }
+
+  .lock-bg {
+    position: absolute; inset: 0;
+    background:
+      radial-gradient(ellipse 60% 50% at 20% 80%, rgba(212,116,143,0.08) 0%, transparent 60%),
+      radial-gradient(ellipse 40% 40% at 80% 20%, rgba(184,142,200,0.07) 0%, transparent 60%),
+      radial-gradient(ellipse 30% 40% at 50% 50%, rgba(55,73,86,0.25) 0%, transparent 70%);
+    pointer-events: none;
+  }
+
+  .lock-grid {
+    position: absolute; inset: 0;
+    background-image:
+      linear-gradient(rgba(212,116,143,0.04) 1px, transparent 1px),
+      linear-gradient(90deg, rgba(184,142,200,0.04) 1px, transparent 1px);
+    background-size: 40px 40px;
+    pointer-events: none;
+  }
+
+  .lock-card {
+    position: relative;
+    background: var(--panel);
+    border: 1px solid var(--border2);
+    border-radius: 16px;
+    padding: 48px 52px;
+    width: 420px;
+    box-shadow: 0 0 60px rgba(212,116,143,0.1), 0 0 120px rgba(184,142,200,0.06), 0 32px 64px rgba(0,0,0,0.5);
+  }
+
+  .lock-logo {
+    font-family: var(--sans);
+    font-size: 13px;
+    font-weight: 700;
+    letter-spacing: 0.25em;
+    text-transform: uppercase;
+    color: var(--accent);
+    margin-bottom: 8px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+
+  .lock-logo::before {
+    content: '';
+    display: inline-block;
+    width: 6px; height: 6px;
+    border-radius: 50%;
+    background: var(--accent);
+    box-shadow: 0 0 8px var(--accent);
+  }
+
+  .lock-title {
+    font-family: var(--sans);
+    font-size: 32px;
+    font-weight: 800;
+    color: var(--text);
+    margin-bottom: 6px;
+    letter-spacing: -0.5px;
+  }
+
+  .lock-sub {
+    font-size: 12px;
+    color: var(--text3);
+    margin-bottom: 36px;
+    letter-spacing: 0.05em;
+  }
+
+  .field-label {
+    font-size: 11px;
+    font-weight: 500;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    color: var(--text3);
+    margin-bottom: 8px;
+  }
+
+  .input-wrap {
+    position: relative;
+    margin-bottom: 20px;
+  }
+
+  .input-wrap input {
+    width: 100%;
+    background: var(--bg2);
+    border: 1px solid var(--border2);
+    border-radius: 8px;
+    padding: 12px 44px 12px 16px;
+    font-family: var(--mono);
+    font-size: 14px;
+    color: var(--text);
+    outline: none;
+    transition: border-color 0.2s, box-shadow 0.2s;
+  }
+
+  .input-wrap input:focus {
+    border-color: var(--accent);
+    box-shadow: 0 0 0 3px rgba(212,116,143,0.15);
+  }
+
+  .input-wrap .eye-btn {
+    position: absolute;
+    right: 12px; top: 50%;
+    transform: translateY(-50%);
+    background: none; border: none;
+    color: var(--text3);
+    cursor: pointer;
+    font-size: 16px;
+    line-height: 1;
+    padding: 4px;
+    transition: color 0.2s;
+  }
+
+  .input-wrap .eye-btn:hover { color: var(--text); }
+
+  .btn-primary {
+    width: 100%;
+    padding: 13px;
+    background: var(--accent);
+    border: none;
+    border-radius: 8px;
+    font-family: var(--sans);
+    font-size: 14px;
+    font-weight: 700;
+    letter-spacing: 0.08em;
+    color: #fff;
+    cursor: pointer;
+    transition: background 0.2s, box-shadow 0.2s, transform 0.1s;
+    margin-bottom: 16px;
+  }
+
+  .btn-primary:hover { background: #c05e7a; box-shadow: 0 4px 20px rgba(212,116,143,0.4); }
+  .btn-primary:active { transform: scale(0.98); }
+
+  .lock-links {
+    display: flex;
+    justify-content: space-between;
+    margin-top: 8px;
+  }
+
+  .lock-link {
+    font-size: 11px;
+    color: var(--text3);
+    cursor: pointer;
+    transition: color 0.2s;
+    text-decoration: underline;
+    text-underline-offset: 3px;
+  }
+
+  .lock-link:hover { color: var(--accent); }
+
+  .lock-error {
+    background: rgba(240,91,91,0.12);
+    border: 1px solid rgba(240,91,91,0.3);
+    border-radius: 6px;
+    padding: 10px 14px;
+    font-size: 12px;
+    color: var(--red);
+    margin-bottom: 16px;
+    display: none;
+  }
+
+  /* ── MAIN APP ── */
+  #app {
+    display: none;
+    min-height: 100vh;
+  }
+
+  /* Sidebar */
+  #sidebar {
+    position: fixed;
+    left: 0; top: 0; bottom: 0;
+    width: 240px;
+    background: linear-gradient(180deg, #161c22 0%, #171b1f 60%, #141a20 100%);
+    border-right: 1px solid var(--border);
+    display: flex;
+    flex-direction: column;
+    z-index: 100;
+    overflow-y: auto;
+  }
+
+  .sidebar-header {
+    padding: 24px 20px 16px;
+    border-bottom: 1px solid var(--border);
+  }
+
+  .app-logo {
+    font-family: var(--sans);
+    font-size: 11px;
+    font-weight: 700;
+    letter-spacing: 0.25em;
+    text-transform: uppercase;
+    color: var(--accent);
+    margin-bottom: 4px;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+  }
+
+  .app-logo::before {
+    content: '';
+    display: inline-block;
+    width: 5px; height: 5px;
+    border-radius: 50%;
+    background: var(--accent);
+    box-shadow: 0 0 6px var(--accent);
+  }
+
+  .app-name {
+    font-family: var(--sans);
+    font-size: 20px;
+    font-weight: 800;
+    color: var(--text);
+    letter-spacing: -0.3px;
+  }
+
+  .sidebar-search {
+    padding: 12px 16px;
+    border-bottom: 1px solid var(--border);
+  }
+
+  .search-wrap {
+    position: relative;
+  }
+
+  .search-wrap input {
+    width: 100%;
+    background: var(--bg3);
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    padding: 8px 10px 8px 32px;
+    font-family: var(--mono);
+    font-size: 12px;
+    color: var(--text);
+    outline: none;
+    transition: border-color 0.2s;
+  }
+
+  .search-wrap input:focus { border-color: var(--accent); }
+  .search-wrap input::placeholder { color: var(--text3); }
+
+  .search-icon {
+    position: absolute;
+    left: 10px; top: 50%;
+    transform: translateY(-50%);
+    color: var(--text3);
+    font-size: 13px;
+    pointer-events: none;
+  }
+
+  .sidebar-nav {
+    flex: 1;
+    padding: 8px 0;
+    overflow-y: auto;
+  }
+
+  .nav-section-label {
+    font-size: 9px;
+    font-weight: 700;
+    letter-spacing: 0.2em;
+    text-transform: uppercase;
+    color: var(--text3);
+    padding: 12px 20px 4px;
+  }
+
+  .nav-item {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 9px 20px;
+    font-size: 12px;
+    color: var(--text2);
+    cursor: pointer;
+    transition: background 0.15s, color 0.15s;
+    border-left: 2px solid transparent;
+    position: relative;
+  }
+
+  .nav-item:hover { background: var(--panel); color: var(--text); }
+
+  .nav-item.active {
+    background: var(--accent-glow);
+    color: var(--accent);
+    border-left-color: var(--accent);
+  }
+
+  .nav-icon { width: 16px; text-align: center; flex-shrink: 0; }
+
+  .sidebar-footer {
+    padding: 12px 16px;
+    border-top: 1px solid var(--border);
+    display: flex;
+    gap: 8px;
+  }
+
+  .footer-btn {
+    flex: 1;
+    padding: 8px;
+    background: var(--panel);
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    font-family: var(--mono);
+    font-size: 10px;
+    color: var(--text2);
+    cursor: pointer;
+    transition: all 0.2s;
+    text-align: center;
+    letter-spacing: 0.05em;
+  }
+
+  .footer-btn:hover { border-color: var(--accent); color: var(--accent); }
+
+  /* Main content */
+  #main {
+    margin-left: 240px;
+    padding: 32px 40px;
+    min-height: 100vh;
+  }
+
+  .section-page { display: none; }
+  .section-page.active { display: block; }
+
+  .page-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 32px;
+    padding-bottom: 20px;
+    border-bottom: 1px solid var(--border);
+  }
+
+  .page-title {
+    font-family: var(--sans);
+    font-size: 24px;
+    font-weight: 800;
+    color: var(--text);
+    letter-spacing: -0.3px;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+  }
+
+  .page-icon {
+    width: 36px; height: 36px;
+    background: var(--accent-glow);
+    border: 1px solid rgba(212,116,143,0.25);
+    border-radius: 8px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 16px;
+  }
+
+  .btn-add {
+    padding: 9px 18px;
+    background: var(--accent);
+    border: none;
+    border-radius: 6px;
+    font-family: var(--mono);
+    font-size: 12px;
+    font-weight: 500;
+    color: #fff;
+    cursor: pointer;
+    transition: all 0.2s;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+  }
+
+  .btn-add:hover { background: #c05e7a; box-shadow: 0 4px 16px rgba(212,116,143,0.35); }
+
+  /* Cards */
+  .cards-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(340px, 1fr));
+    gap: 16px;
+  }
+
+  .card {
+    background: var(--panel);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 20px;
+    transition: border-color 0.2s, box-shadow 0.2s;
+    position: relative;
+  }
+
+  .card:hover {
+    border-color: var(--border2);
+    box-shadow: 0 4px 24px rgba(0,0,0,0.3);
+    border-left-color: rgba(212,116,143,0.35);
+  }
+
+  .card-header {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    margin-bottom: 16px;
+  }
+
+  .card-title {
+    font-family: var(--sans);
+    font-size: 15px;
+    font-weight: 700;
+    color: var(--text);
+  }
+
+  .card-subtitle {
+    font-size: 11px;
+    color: var(--text3);
+    margin-top: 2px;
+  }
+
+  .card-actions {
+    display: flex;
+    gap: 4px;
+  }
+
+  .icon-btn {
+    width: 28px; height: 28px;
+    background: none;
+    border: 1px solid transparent;
+    border-radius: 5px;
+    color: var(--text3);
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 13px;
+    transition: all 0.15s;
+  }
+
+  .icon-btn:hover { background: var(--panel2); border-color: var(--border); color: var(--text); }
+  .icon-btn.danger:hover { color: var(--red); border-color: rgba(240,91,91,0.3); }
+
+  .field-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 7px 0;
+    border-bottom: 1px solid rgba(255,255,255,0.04);
+    gap: 10px;
+  }
+
+  .field-row:last-child { border-bottom: none; }
+
+  .field-key {
+    font-size: 10px;
+    font-weight: 500;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    color: var(--text3);
+    flex-shrink: 0;
+    min-width: 90px;
+  }
+
+  .field-val {
+    font-size: 12px;
+    color: var(--text2);
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    flex: 1;
+    justify-content: flex-end;
+    word-break: break-all;
+    text-align: right;
+  }
+
+  .secret-val {
+    font-family: var(--mono);
+    letter-spacing: 0.15em;
+    color: var(--text3);
+  }
+
+  .revealed { color: var(--green) !important; letter-spacing: normal; }
+
+  .mini-btn {
+    background: none;
+    border: none;
+    color: var(--text3);
+    cursor: pointer;
+    font-size: 11px;
+    padding: 2px 4px;
+    border-radius: 3px;
+    transition: color 0.15s;
+    flex-shrink: 0;
+  }
+
+  .mini-btn:hover { color: var(--accent); }
+
+  .tag {
+    display: inline-flex;
+    align-items: center;
+    padding: 2px 8px;
+    border-radius: 3px;
+    font-size: 9px;
+    font-weight: 700;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+  }
+
+  .tag-blue { background: rgba(184,142,200,0.15); color: var(--accent2); }
+  .tag-green { background: var(--green-dim); color: var(--green); }
+  .tag-yellow { background: rgba(200,169,110,0.12); color: var(--yellow); }
+  .tag-rose { background: rgba(212,116,143,0.15); color: var(--accent); }
+
+  /* Table cards for port maps etc */
+  .port-table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 12px;
+    margin-top: 8px;
+  }
+
+  .port-table th {
+    font-size: 9px;
+    font-weight: 700;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    color: var(--text3);
+    padding: 6px 10px;
+    text-align: left;
+    border-bottom: 1px solid var(--border);
+  }
+
+  .port-table td {
+    padding: 7px 10px;
+    border-bottom: 1px solid rgba(255,255,255,0.03);
+    color: var(--text2);
+    vertical-align: middle;
+  }
+
+  .port-table tr:last-child td { border-bottom: none; }
+
+  .port-num {
+    width: 36px; height: 24px;
+    background: var(--bg3);
+    border: 1px solid var(--border);
+    border-radius: 4px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 11px;
+    font-weight: 700;
+    color: var(--accent);
+  }
+
+  /* Modal */
+  .modal-overlay {
+    position: fixed; inset: 0;
+    background: rgba(0,0,0,0.7);
+    backdrop-filter: blur(4px);
+    display: none;
+    align-items: center;
+    justify-content: center;
+    z-index: 500;
+  }
+
+  .modal-overlay.open { display: flex; }
+
+  .modal {
+    background: var(--panel);
+    border: 1px solid var(--border2);
+    border-radius: 12px;
+    width: 520px;
+    max-width: 95vw;
+    max-height: 90vh;
+    overflow-y: auto;
+    box-shadow: 0 32px 64px rgba(0,0,0,0.5);
+  }
+
+  .modal-header {
+    padding: 24px 28px 16px;
+    border-bottom: 1px solid var(--border);
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+  }
+
+  .modal-title {
+    font-family: var(--sans);
+    font-size: 18px;
+    font-weight: 700;
+    color: var(--text);
+  }
+
+  .modal-close {
+    width: 30px; height: 30px;
+    background: none;
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    color: var(--text2);
+    cursor: pointer;
+    font-size: 16px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.15s;
+  }
+
+  .modal-close:hover { border-color: var(--red); color: var(--red); }
+
+  .modal-body { padding: 24px 28px; }
+  .modal-footer {
+    padding: 16px 28px;
+    border-top: 1px solid var(--border);
+    display: flex;
+    gap: 10px;
+    justify-content: flex-end;
+  }
+
+  .form-group { margin-bottom: 16px; }
+
+  .form-label {
+    display: block;
+    font-size: 10px;
+    font-weight: 700;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    color: var(--text3);
+    margin-bottom: 6px;
+  }
+
+  .form-input {
+    width: 100%;
+    background: var(--bg2);
+    border: 1px solid var(--border2);
+    border-radius: 6px;
+    padding: 10px 14px;
+    font-family: var(--mono);
+    font-size: 13px;
+    color: var(--text);
+    outline: none;
+    transition: border-color 0.2s;
+  }
+
+  .form-input:focus { border-color: var(--accent); }
+
+  .form-select {
+    width: 100%;
+    background: var(--bg2);
+    border: 1px solid var(--border2);
+    border-radius: 6px;
+    padding: 10px 14px;
+    font-family: var(--mono);
+    font-size: 13px;
+    color: var(--text);
+    outline: none;
+  }
+
+  .form-row { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+
+  .btn-cancel {
+    padding: 9px 18px;
+    background: none;
+    border: 1px solid var(--border2);
+    border-radius: 6px;
+    font-family: var(--mono);
+    font-size: 12px;
+    color: var(--text2);
+    cursor: pointer;
+    transition: all 0.2s;
+  }
+
+  .btn-cancel:hover { border-color: var(--text2); color: var(--text); }
+
+  .btn-save {
+    padding: 9px 18px;
+    background: var(--accent);
+    border: none;
+    border-radius: 6px;
+    font-family: var(--mono);
+    font-size: 12px;
+    font-weight: 500;
+    color: #fff;
+    cursor: pointer;
+    transition: all 0.2s;
+  }
+
+  .btn-save:hover { background: #c05e7a; }
+
+  /* Toast */
+  #toast {
+    position: fixed;
+    bottom: 28px; right: 28px;
+    padding: 12px 20px;
+    background: var(--panel2);
+    border: 1px solid var(--green);
+    border-radius: 8px;
+    font-size: 12px;
+    color: var(--green);
+    box-shadow: 0 8px 32px rgba(0,0,0,0.4);
+    transform: translateY(60px);
+    opacity: 0;
+    transition: all 0.3s;
+    z-index: 9999;
+    pointer-events: none;
+  }
+
+  #toast.show { transform: translateY(0); opacity: 1; }
+
+  /* Search highlight */
+  .search-hidden { display: none !important; }
+  mark { background: rgba(212,116,143,0.25); color: var(--text); border-radius: 2px; }
+
+  /* Scrollbar */
+  ::-webkit-scrollbar { width: 6px; }
+  ::-webkit-scrollbar-track { background: transparent; }
+  ::-webkit-scrollbar-thumb { background: var(--border2); border-radius: 3px; }
+  ::-webkit-scrollbar-thumb:hover { background: var(--text3); }
+
+  /* Reset screen */
+  #reset-screen { display: none; }
+
+  .wide-card { grid-column: 1 / -1; }
+
+  .section-divider {
+    font-size: 10px;
+    font-weight: 700;
+    letter-spacing: 0.15em;
+    text-transform: uppercase;
+    color: var(--text3);
+    margin: 24px 0 12px;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+  }
+
+  .section-divider::after {
+    content: '';
+    flex: 1;
+    height: 1px;
+    background: var(--border);
+  }
+
+  /* Person tabs */
+  .person-tabs {
+    display: flex;
+    gap: 6px;
+    margin-bottom: 24px;
+    flex-wrap: wrap;
+  }
+
+  .person-tab {
+    padding: 7px 16px;
+    background: var(--panel);
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    font-size: 12px;
+    color: var(--text2);
+    cursor: pointer;
+    transition: all 0.15s;
+  }
+
+  .person-tab:hover { border-color: var(--border2); color: var(--text); }
+  .person-tab.active { background: var(--accent-glow); border-color: var(--accent); color: var(--accent); }
+
+  .person-panel { display: none; }
+  .person-panel.active { display: grid; grid-template-columns: repeat(auto-fill, minmax(340px, 1fr)); gap: 16px; }
+</style>
+</head>
+<body>
+
+<!-- ═══════════════════════════════════════════
+     LOCK SCREEN
+════════════════════════════════════════════ -->
+<div id="lock-screen">
+  <div class="lock-bg"></div>
+  <div class="lock-grid"></div>
+
+  <div id="login-panel" class="lock-card">
+    <div class="lock-logo">ConfigVault</div>
+    <div class="lock-title">Secure Access</div>
+    <div class="lock-sub">Enter your master password to continue</div>
+
+    <div id="login-error" class="lock-error">Incorrect password. Please try again.</div>
+
+    <div class="field-label">Master Password</div>
+    <div class="input-wrap">
+      <input type="password" id="master-pw-input" placeholder="••••••••••••" autocomplete="current-password">
+      <button class="eye-btn" onclick="togglePw('master-pw-input',this)">👁</button>
+    </div>
+
+    <button class="btn-primary" onclick="attemptLogin()">Unlock Vault</button>
+
+    <div class="lock-links">
+      <span class="lock-link" onclick="showSetup()">First time? Set up vault</span>
+      <span class="lock-link" onclick="showReset()">Reset password</span>
+    </div>
+  </div>
+
+  <!-- Setup panel -->
+  <div id="setup-panel" class="lock-card" style="display:none;">
+    <div class="lock-logo">ConfigVault</div>
+    <div class="lock-title">Create Vault</div>
+    <div class="lock-sub">Set your master password to get started</div>
+
+    <div id="setup-error" class="lock-error"></div>
+
+    <div class="field-label">Master Password</div>
+    <div class="input-wrap">
+      <input type="password" id="setup-pw" placeholder="Choose a strong password">
+      <button class="eye-btn" onclick="togglePw('setup-pw',this)">👁</button>
+    </div>
+
+    <div class="field-label">Confirm Password</div>
+    <div class="input-wrap">
+      <input type="password" id="setup-pw2" placeholder="Repeat password">
+      <button class="eye-btn" onclick="togglePw('setup-pw2',this)">👁</button>
+    </div>
+
+    <div class="field-label">Security Question (for reset)</div>
+    <div class="input-wrap" style="margin-bottom:8px;">
+      <input type="text" id="setup-sq" placeholder="e.g. Name of your first pet" style="padding-right:14px;">
+    </div>
+
+    <div class="field-label">Answer</div>
+    <div class="input-wrap">
+      <input type="text" id="setup-sa" placeholder="Answer (case-insensitive)">
+    </div>
+
+    <div style="margin:16px 0 8px;padding:12px;background:var(--bg3);border:1px solid var(--border);border-radius:8px;">
+      <div style="font-size:10px;font-weight:700;letter-spacing:0.12em;text-transform:uppercase;color:var(--accent2);margin-bottom:10px;">&#9729; GitHub Sync (Cross-Device)</div>
+      <div class="field-label">Personal Access Token</div>
+      <div class="input-wrap" style="margin-bottom:10px;">
+        <input type="password" id="setup-gh-token" placeholder="ghp_xxxxxxxxxxxxxxxxxxxx">
+        <button class="eye-btn" onclick="togglePw('setup-gh-token',this)">&#128065;</button>
+      </div>
+      <div class="field-label">Repository (owner/repo)</div>
+      <div class="input-wrap" style="margin-bottom:10px;">
+        <input type="text" id="setup-gh-repo" placeholder="solman-nz-ux/Projects" value="solman-nz-ux/Projects">
+      </div>
+      <div class="field-label">File Path in Repo</div>
+      <div class="input-wrap" style="margin-bottom:4px;">
+        <input type="text" id="setup-gh-path" placeholder="vault/configvault.enc" value="vault/configvault.enc">
+      </div>
+      <div style="font-size:10px;color:var(--text3);margin-top:4px;">Leave token blank to use local storage only.</div>
+    </div>
+
+    <button class="btn-primary" onclick="setupVault()">Create Vault</button>
+    <div class="lock-links">
+      <span class="lock-link" onclick="showLogin()">&#8592; Back to login</span>
+    </div>
+  </div>
+
+  <!-- Reset panel -->
+  <div id="reset-panel" class="lock-card" style="display:none;">
+    <div class="lock-logo">ConfigVault</div>
+    <div class="lock-title">Reset Password</div>
+    <div class="lock-sub">Answer your security question</div>
+
+    <div id="reset-error" class="lock-error"></div>
+
+    <div id="reset-q-display" style="font-size:13px;color:var(--text2);margin-bottom:20px;padding:12px;background:var(--bg2);border-radius:6px;border:1px solid var(--border);"></div>
+
+    <div class="field-label">Your Answer</div>
+    <div class="input-wrap">
+      <input type="text" id="reset-answer" placeholder="Your answer">
+    </div>
+
+    <div class="field-label">New Master Password</div>
+    <div class="input-wrap">
+      <input type="password" id="reset-new-pw" placeholder="New password">
+      <button class="eye-btn" onclick="togglePw('reset-new-pw',this)">👁</button>
+    </div>
+
+    <button class="btn-primary" onclick="doReset()">Reset Password</button>
+    <div class="lock-links">
+      <span class="lock-link" onclick="showLogin()">← Back to login</span>
+    </div>
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════════════
+     MAIN APP
+════════════════════════════════════════════ -->
+<div id="app">
+  <!-- Sidebar -->
+  <nav id="sidebar">
+    <div class="sidebar-header">
+      <div class="app-logo">ConfigVault</div>
+      <div class="app-name">Home Network</div>
+    </div>
+    <div class="sidebar-search">
+      <div class="search-wrap">
+        <span class="search-icon">🔍</span>
+        <input type="text" id="global-search" placeholder="Search everything..." oninput="globalSearch(this.value)">
+      </div>
+    </div>
+    <div class="sidebar-nav">
+      <div class="nav-section-label">Infrastructure</div>
+      <div class="nav-item active" onclick="showPage('network')" id="nav-network">
+        <span class="nav-icon">🌐</span> Network
+      </div>
+      <div class="nav-item" onclick="showPage('isp')" id="nav-isp">
+        <span class="nav-icon">📡</span> ISP / Modem
+      </div>
+      <div class="nav-section-label">Access</div>
+      <div class="nav-item" onclick="showPage('smartlock')" id="nav-smartlock">
+        <span class="nav-icon">🔒</span> Smart Lock
+      </div>
+      <div class="nav-item" onclick="showPage('email')" id="nav-email">
+        <span class="nav-icon">✉️</span> Email Config
+      </div>
+      <div class="nav-section-label">Accounts</div>
+      <div class="nav-item" onclick="showPage('family')" id="nav-family">
+        <span class="nav-icon">👨‍👩‍👧‍👦</span> Family Accounts
+      </div>
+      <div class="nav-item" onclick="showPage('services')" id="nav-services">
+        <span class="nav-icon">☁️</span> Services
+      </div>
+      <div class="nav-section-label">Other</div>
+      <div class="nav-item" onclick="showPage('health')" id="nav-health">
+        <span class="nav-icon">🏥</span> Health Portals
+      </div>
+      <div class="nav-item" onclick="showPage('school')" id="nav-school">
+        <span class="nav-icon">🎒</span> School Portals
+      </div>
+      <div class="nav-section-label">Settings</div>
+      <div class="nav-item" onclick="openGithubSettings()" id="nav-github">
+        <span class="nav-icon">⟳</span> GitHub Sync
+      </div>
+    </div>
+    <div class="sidebar-footer">
+      <button class="footer-btn" onclick="exportVault()">⬇ Export</button>
+      <button class="footer-btn" onclick="document.getElementById('import-file').click()">⬆ Import</button>
+      <button class="footer-btn" onclick="lockVault()" style="color:var(--red);">🔒 Lock</button>
+      <button class="footer-btn" id="gh-sync-btn" onclick="handleSyncBtn()" title="Sync with GitHub">⟳ Sync</button>
+      <input type="file" id="import-file" style="display:none" accept=".json" onchange="importVault(this)">
+    </div>
+    <div id="sync-status" style="padding:8px 16px;font-size:10px;color:var(--text3);border-top:1px solid var(--border);display:none;">
+      <span id="sync-status-text">Not synced</span>
+    </div>
+  </nav>
+
+  <!-- Main -->
+  <main id="main">
+
+    <!-- ── NETWORK ── -->
+    <div class="section-page active" id="page-network">
+      <div class="page-header">
+        <div class="page-title"><div class="page-icon">🌐</div> Network Infrastructure</div>
+        <button class="btn-add" onclick="openModal('network-device-modal')">＋ Add Device</button>
+      </div>
+      <div id="network-cards" class="cards-grid"></div>
+    </div>
+
+    <!-- ── ISP ── -->
+    <div class="section-page" id="page-isp">
+      <div class="page-header">
+        <div class="page-title"><div class="page-icon">📡</div> ISP / Modem Setup</div>
+        <button class="btn-add" onclick="openModal('isp-modal')">＋ Add Config</button>
+      </div>
+      <div id="isp-cards" class="cards-grid"></div>
+    </div>
+
+    <!-- ── SMART LOCK ── -->
+    <div class="section-page" id="page-smartlock">
+      <div class="page-header">
+        <div class="page-title"><div class="page-icon">🔒</div> Smart Lock</div>
+        <button class="btn-add" onclick="openModal('lock-modal')">＋ Add Entry</button>
+      </div>
+      <div id="lock-cards" class="cards-grid"></div>
+    </div>
+
+    <!-- ── EMAIL ── -->
+    <div class="section-page" id="page-email">
+      <div class="page-header">
+        <div class="page-title"><div class="page-icon">✉️</div> Email Configuration</div>
+        <button class="btn-add" onclick="openModal('email-modal')">＋ Add Account</button>
+      </div>
+      <div id="email-cards" class="cards-grid"></div>
+    </div>
+
+    <!-- ── FAMILY ── -->
+    <div class="section-page" id="page-family">
+      <div class="page-header">
+        <div class="page-title"><div class="page-icon">👨‍👩‍👧‍👦</div> Family Accounts</div>
+        <button class="btn-add" onclick="openModal('family-modal')">＋ Add Account</button>
+      </div>
+      <div class="person-tabs" id="person-tabs"></div>
+      <div id="family-panels"></div>
+    </div>
+
+    <!-- ── SERVICES ── -->
+    <div class="section-page" id="page-services">
+      <div class="page-header">
+        <div class="page-title"><div class="page-icon">☁️</div> Services & Subscriptions</div>
+        <button class="btn-add" onclick="openModal('service-modal')">＋ Add Service</button>
+      </div>
+      <div id="service-cards" class="cards-grid"></div>
+    </div>
+
+    <!-- ── HEALTH ── -->
+    <div class="section-page" id="page-health">
+      <div class="page-header">
+        <div class="page-title"><div class="page-icon">🏥</div> Health Portals</div>
+        <button class="btn-add" onclick="openModal('health-modal')">＋ Add Portal</button>
+      </div>
+      <div id="health-cards" class="cards-grid"></div>
+    </div>
+
+    <!-- ── SCHOOL ── -->
+    <div class="section-page" id="page-school">
+      <div class="page-header">
+        <div class="page-title"><div class="page-icon">🎒</div> School Portals</div>
+        <button class="btn-add" onclick="openModal('school-modal')">＋ Add Portal</button>
+      </div>
+      <div id="school-cards" class="cards-grid"></div>
+    </div>
+
+  </main>
+</div>
+
+<!-- ═══════════════════════════════════════════
+     MODALS
+════════════════════════════════════════════ -->
+
+<!-- Network Device Modal -->
+<div class="modal-overlay" id="network-device-modal">
+  <div class="modal">
+    <div class="modal-header">
+      <div class="modal-title" id="nd-modal-title">Add Network Device</div>
+      <button class="modal-close" onclick="closeModal('network-device-modal')">✕</button>
+    </div>
+    <div class="modal-body">
+      <input type="hidden" id="nd-edit-id">
+      <div class="form-group">
+        <label class="form-label">Device Name</label>
+        <input class="form-input" id="nd-name" placeholder="e.g. Main Router">
+      </div>
+      <div class="form-row">
+        <div class="form-group">
+          <label class="form-label">Brand / Model</label>
+          <input class="form-input" id="nd-brand" placeholder="e.g. Ubiquiti UCG-Ultra">
+        </div>
+        <div class="form-group">
+          <label class="form-label">Type</label>
+          <select class="form-select" id="nd-type">
+            <option>Router</option>
+            <option>Switch</option>
+            <option>Access Point</option>
+            <option>NAS</option>
+            <option>Other</option>
+          </select>
+        </div>
+      </div>
+      <div class="form-row">
+        <div class="form-group">
+          <label class="form-label">IP Address</label>
+          <input class="form-input" id="nd-ip" placeholder="192.168.1.1">
+        </div>
+        <div class="form-group">
+          <label class="form-label">Subnet Mask</label>
+          <input class="form-input" id="nd-subnet" placeholder="255.255.255.0">
+        </div>
+      </div>
+      <div class="form-row">
+        <div class="form-group">
+          <label class="form-label">Username</label>
+          <input class="form-input" id="nd-user" placeholder="admin">
+        </div>
+        <div class="form-group">
+          <label class="form-label">Password</label>
+          <input class="form-input" type="password" id="nd-pass" placeholder="••••••••">
+        </div>
+      </div>
+      <div class="form-row">
+        <div class="form-group">
+          <label class="form-label">SSID (WiFi)</label>
+          <input class="form-input" id="nd-ssid" placeholder="Network name">
+        </div>
+        <div class="form-group">
+          <label class="form-label">WiFi Password</label>
+          <input class="form-input" type="password" id="nd-wifi-pass" placeholder="••••••••">
+        </div>
+      </div>
+      <div class="form-group">
+        <label class="form-label">Notes</label>
+        <input class="form-input" id="nd-notes" placeholder="Any additional notes">
+      </div>
+      <!-- Port Map -->
+      <div class="form-group">
+        <label class="form-label">Port Map (one per line: Port# - Description)</label>
+        <textarea class="form-input" id="nd-ports" rows="6" placeholder="1 - Internet Router&#10;2 - Office Switch&#10;3 - Dave Laptop"></textarea>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn-cancel" onclick="closeModal('network-device-modal')">Cancel</button>
+      <button class="btn-save" onclick="saveNetworkDevice()">Save Device</button>
+    </div>
+  </div>
+</div>
+
+<!-- ISP Modal -->
+<div class="modal-overlay" id="isp-modal">
+  <div class="modal">
+    <div class="modal-header">
+      <div class="modal-title">ISP / Modem Configuration</div>
+      <button class="modal-close" onclick="closeModal('isp-modal')">✕</button>
+    </div>
+    <div class="modal-body">
+      <input type="hidden" id="isp-edit-id">
+      <div class="form-row">
+        <div class="form-group">
+          <label class="form-label">Provider</label>
+          <input class="form-input" id="isp-provider" placeholder="e.g. Spark">
+        </div>
+        <div class="form-group">
+          <label class="form-label">Connection Type</label>
+          <select class="form-select" id="isp-type">
+            <option>Fibre</option>
+            <option>VDSL</option>
+            <option>Cable</option>
+            <option>4G/LTE</option>
+          </select>
+        </div>
+      </div>
+      <div class="form-row">
+        <div class="form-group">
+          <label class="form-label">PPP Username</label>
+          <input class="form-input" id="isp-ppp-user" placeholder="user@spark.co.nz">
+        </div>
+        <div class="form-group">
+          <label class="form-label">PPP Password</label>
+          <input class="form-input" type="password" id="isp-ppp-pass" placeholder="••••••••">
+        </div>
+      </div>
+      <div class="form-row">
+        <div class="form-group">
+          <label class="form-label">PPP Protocol</label>
+          <input class="form-input" id="isp-ppp-proto" value="PPPoE">
+        </div>
+        <div class="form-group">
+          <label class="form-label">PPP Auth Type</label>
+          <input class="form-input" id="isp-ppp-auth" value="PAP">
+        </div>
+      </div>
+      <div class="form-row">
+        <div class="form-group">
+          <label class="form-label">VLAN / VID</label>
+          <input class="form-input" id="isp-vlan" placeholder="10">
+        </div>
+        <div class="form-group">
+          <label class="form-label">MTU</label>
+          <input class="form-input" id="isp-mtu" value="1500">
+        </div>
+      </div>
+      <div class="form-row">
+        <div class="form-group">
+          <label class="form-label">Encapsulation</label>
+          <input class="form-input" id="isp-encap" value="802.1Q">
+        </div>
+        <div class="form-group">
+          <label class="form-label">Operating Mode</label>
+          <input class="form-input" id="isp-mode" value="MDI/MDIX">
+        </div>
+      </div>
+      <div class="form-group">
+        <label class="form-label">Notes</label>
+        <textarea class="form-input" id="isp-notes" rows="3"></textarea>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn-cancel" onclick="closeModal('isp-modal')">Cancel</button>
+      <button class="btn-save" onclick="saveISP()">Save</button>
+    </div>
+  </div>
+</div>
+
+<!-- Smart Lock Modal -->
+<div class="modal-overlay" id="lock-modal">
+  <div class="modal">
+    <div class="modal-header">
+      <div class="modal-title">Smart Lock Entry</div>
+      <button class="modal-close" onclick="closeModal('lock-modal')">✕</button>
+    </div>
+    <div class="modal-body">
+      <input type="hidden" id="lock-edit-id">
+      <div class="form-row">
+        <div class="form-group">
+          <label class="form-label">Lock Name</label>
+          <input class="form-input" id="lock-name" placeholder="e.g. Schlage Front Door">
+        </div>
+        <div class="form-group">
+          <label class="form-label">Account Email</label>
+          <input class="form-input" id="lock-email" placeholder="email@example.com">
+        </div>
+      </div>
+      <div class="form-group">
+        <label class="form-label">Account Password</label>
+        <input class="form-input" type="password" id="lock-pass" placeholder="••••••••">
+      </div>
+      <div class="form-group">
+        <label class="form-label">Door PINs (one per line: Name - PIN)</label>
+        <textarea class="form-input" id="lock-pins" rows="10" placeholder="Dave - 123456&#10;Gaylene - 654321&#10;Emma - 111222"></textarea>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn-cancel" onclick="closeModal('lock-modal')">Cancel</button>
+      <button class="btn-save" onclick="saveLock()">Save</button>
+    </div>
+  </div>
+</div>
+
+<!-- Email Modal -->
+<div class="modal-overlay" id="email-modal">
+  <div class="modal">
+    <div class="modal-header">
+      <div class="modal-title">Email Account</div>
+      <button class="modal-close" onclick="closeModal('email-modal')">✕</button>
+    </div>
+    <div class="modal-body">
+      <input type="hidden" id="em-edit-id">
+      <div class="form-row">
+        <div class="form-group">
+          <label class="form-label">Email Address</label>
+          <input class="form-input" id="em-address" placeholder="user@example.com">
+        </div>
+        <div class="form-group">
+          <label class="form-label">Password</label>
+          <input class="form-input" type="password" id="em-pass" placeholder="••••••••">
+        </div>
+      </div>
+      <div class="form-row">
+        <div class="form-group">
+          <label class="form-label">Incoming Server</label>
+          <input class="form-input" id="em-imap-server" placeholder="mail.example.com">
+        </div>
+        <div class="form-group">
+          <label class="form-label">IMAP Port</label>
+          <input class="form-input" id="em-imap-port" placeholder="993">
+        </div>
+      </div>
+      <div class="form-row">
+        <div class="form-group">
+          <label class="form-label">Outgoing Server</label>
+          <input class="form-input" id="em-smtp-server" placeholder="mail.example.com">
+        </div>
+        <div class="form-group">
+          <label class="form-label">SMTP Port</label>
+          <input class="form-input" id="em-smtp-port" placeholder="465">
+        </div>
+      </div>
+      <div class="form-row">
+        <div class="form-group">
+          <label class="form-label">POP3 Port</label>
+          <input class="form-input" id="em-pop3-port" placeholder="995">
+        </div>
+        <div class="form-group">
+          <label class="form-label">SSL/TLS</label>
+          <select class="form-select" id="em-ssl">
+            <option>Yes (Recommended)</option>
+            <option>No</option>
+          </select>
+        </div>
+      </div>
+      <div class="form-group">
+        <label class="form-label">Data File Location</label>
+        <input class="form-input" id="em-datafile" placeholder="E:/user data/documents/outlook files">
+      </div>
+      <div class="form-group">
+        <label class="form-label">Notes</label>
+        <input class="form-input" id="em-notes" placeholder="Any notes">
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn-cancel" onclick="closeModal('email-modal')">Cancel</button>
+      <button class="btn-save" onclick="saveEmail()">Save</button>
+    </div>
+  </div>
+</div>
+
+<!-- Family Account Modal -->
+<div class="modal-overlay" id="family-modal">
+  <div class="modal">
+    <div class="modal-header">
+      <div class="modal-title">Family Account</div>
+      <button class="modal-close" onclick="closeModal('family-modal')">✕</button>
+    </div>
+    <div class="modal-body">
+      <input type="hidden" id="fa-edit-id">
+      <div class="form-row">
+        <div class="form-group">
+          <label class="form-label">Person</label>
+          <input class="form-input" id="fa-person" placeholder="e.g. Dave">
+        </div>
+        <div class="form-group">
+          <label class="form-label">Service / Account</label>
+          <input class="form-input" id="fa-service" placeholder="e.g. Apple ID">
+        </div>
+      </div>
+      <div class="form-row">
+        <div class="form-group">
+          <label class="form-label">Username / Email</label>
+          <input class="form-input" id="fa-user" placeholder="user@example.com">
+        </div>
+        <div class="form-group">
+          <label class="form-label">Password</label>
+          <input class="form-input" type="password" id="fa-pass" placeholder="••••••••">
+        </div>
+      </div>
+      <div class="form-row">
+        <div class="form-group">
+          <label class="form-label">PIN / Lock Code</label>
+          <input class="form-input" type="password" id="fa-pin" placeholder="Device PIN">
+        </div>
+        <div class="form-group">
+          <label class="form-label">Device</label>
+          <input class="form-input" id="fa-device" placeholder="e.g. iPhone 13">
+        </div>
+      </div>
+      <div class="form-group">
+        <label class="form-label">Security Questions (one per line: Q - A)</label>
+        <textarea class="form-input" id="fa-sq" rows="4" placeholder="Name of first pet - Whiskers&#10;First car - Barina"></textarea>
+      </div>
+      <div class="form-group">
+        <label class="form-label">Notes</label>
+        <input class="form-input" id="fa-notes" placeholder="Account number, membership ID, etc.">
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn-cancel" onclick="closeModal('family-modal')">Cancel</button>
+      <button class="btn-save" onclick="saveFamilyAccount()">Save</button>
+    </div>
+  </div>
+</div>
+
+<!-- Service Modal -->
+<div class="modal-overlay" id="service-modal">
+  <div class="modal">
+    <div class="modal-header">
+      <div class="modal-title">Service Account</div>
+      <button class="modal-close" onclick="closeModal('service-modal')">✕</button>
+    </div>
+    <div class="modal-body">
+      <input type="hidden" id="svc-edit-id">
+      <div class="form-row">
+        <div class="form-group">
+          <label class="form-label">Service Name</label>
+          <input class="form-input" id="svc-name" placeholder="e.g. Google, Steam">
+        </div>
+        <div class="form-group">
+          <label class="form-label">Category</label>
+          <select class="form-select" id="svc-cat">
+            <option>Entertainment</option>
+            <option>Cloud / Storage</option>
+            <option>Gaming</option>
+            <option>Shopping</option>
+            <option>Finance</option>
+            <option>Insurance</option>
+            <option>Other</option>
+          </select>
+        </div>
+      </div>
+      <div class="form-row">
+        <div class="form-group">
+          <label class="form-label">Username / Email</label>
+          <input class="form-input" id="svc-user" placeholder="user@example.com">
+        </div>
+        <div class="form-group">
+          <label class="form-label">Password</label>
+          <input class="form-input" type="password" id="svc-pass" placeholder="••••••••">
+        </div>
+      </div>
+      <div class="form-group">
+        <label class="form-label">Account / Membership Number</label>
+        <input class="form-input" id="svc-acct" placeholder="Optional">
+      </div>
+      <div class="form-group">
+        <label class="form-label">Notes</label>
+        <input class="form-input" id="svc-notes" placeholder="Any notes">
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn-cancel" onclick="closeModal('service-modal')">Cancel</button>
+      <button class="btn-save" onclick="saveService()">Save</button>
+    </div>
+  </div>
+</div>
+
+<!-- Health Modal -->
+<div class="modal-overlay" id="health-modal">
+  <div class="modal">
+    <div class="modal-header">
+      <div class="modal-title">Health Portal</div>
+      <button class="modal-close" onclick="closeModal('health-modal')">✕</button>
+    </div>
+    <div class="modal-body">
+      <input type="hidden" id="hp-edit-id">
+      <div class="form-row">
+        <div class="form-group">
+          <label class="form-label">Portal Name</label>
+          <input class="form-input" id="hp-name" placeholder="e.g. My Health Records">
+        </div>
+        <div class="form-group">
+          <label class="form-label">For (Person)</label>
+          <input class="form-input" id="hp-person" placeholder="e.g. Paige">
+        </div>
+      </div>
+      <div class="form-row">
+        <div class="form-group">
+          <label class="form-label">Email / Username</label>
+          <input class="form-input" id="hp-user" placeholder="user@example.com">
+        </div>
+        <div class="form-group">
+          <label class="form-label">Password</label>
+          <input class="form-input" type="password" id="hp-pass" placeholder="••••••••">
+        </div>
+      </div>
+      <div class="form-group">
+        <label class="form-label">URL</label>
+        <input class="form-input" id="hp-url" placeholder="https://...">
+      </div>
+      <div class="form-group">
+        <label class="form-label">Notes</label>
+        <input class="form-input" id="hp-notes" placeholder="Any notes">
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn-cancel" onclick="closeModal('health-modal')">Cancel</button>
+      <button class="btn-save" onclick="saveHealth()">Save</button>
+    </div>
+  </div>
+</div>
+
+<!-- School Modal -->
+<div class="modal-overlay" id="school-modal">
+  <div class="modal">
+    <div class="modal-header">
+      <div class="modal-title">School Portal</div>
+      <button class="modal-close" onclick="closeModal('school-modal')">✕</button>
+    </div>
+    <div class="modal-body">
+      <input type="hidden" id="sp-edit-id">
+      <div class="form-row">
+        <div class="form-group">
+          <label class="form-label">Portal Name</label>
+          <input class="form-input" id="sp-name" placeholder="e.g. Kamar Portal">
+        </div>
+        <div class="form-group">
+          <label class="form-label">School</label>
+          <input class="form-input" id="sp-school" placeholder="e.g. Rototuna Jnr High">
+        </div>
+      </div>
+      <div class="form-row">
+        <div class="form-group">
+          <label class="form-label">Username</label>
+          <input class="form-input" id="sp-user" placeholder="username">
+        </div>
+        <div class="form-group">
+          <label class="form-label">Password</label>
+          <input class="form-input" type="password" id="sp-pass" placeholder="••••••••">
+        </div>
+      </div>
+      <div class="form-group">
+        <label class="form-label">PIN</label>
+        <input class="form-input" type="password" id="sp-pin" placeholder="Optional PIN">
+      </div>
+      <div class="form-group">
+        <label class="form-label">URL</label>
+        <input class="form-input" id="sp-url" placeholder="https://...">
+      </div>
+      <div class="form-group">
+        <label class="form-label">Notes</label>
+        <input class="form-input" id="sp-notes" placeholder="">
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn-cancel" onclick="closeModal('school-modal')">Cancel</button>
+      <button class="btn-save" onclick="saveSchool()">Save</button>
+    </div>
+  </div>
+</div>
+
+<!-- GitHub Settings Modal -->
+<div class="modal-overlay" id="github-modal">
+  <div class="modal">
+    <div class="modal-header">
+      <div class="modal-title">⟳ GitHub Sync Settings</div>
+      <button class="modal-close" onclick="closeModal('github-modal')">✕</button>
+    </div>
+    <div class="modal-body">
+      <p style="font-size:12px;color:var(--text2);margin-bottom:20px;line-height:1.6;">
+        Your vault is encrypted before leaving this device. GitHub only ever stores the encrypted blob — never your passwords or plain data.
+        <br><br>
+        Create a token at <strong style="color:var(--accent2)">github.com → Settings → Developer settings → Personal access tokens → Fine-grained</strong> with <strong>Contents: Read and Write</strong> on your Projects repo.
+      </p>
+      <div class="form-group">
+        <label class="form-label">Personal Access Token</label>
+        <div style="position:relative">
+          <input class="form-input" type="password" id="gh-token-input" placeholder="ghp_xxxxxxxxxxxxxxxxxxxx" style="padding-right:44px">
+          <button class="eye-btn" onclick="togglePw('gh-token-input',this)" style="position:absolute;right:12px;top:50%;transform:translateY(-50%)">👁</button>
+        </div>
+      </div>
+      <div class="form-group">
+        <label class="form-label">Repository (owner/repo)</label>
+        <input class="form-input" id="gh-repo-input" placeholder="solman-nz-ux/Projects">
+      </div>
+      <div class="form-group">
+        <label class="form-label">File Path in Repo</label>
+        <input class="form-input" id="gh-path-input" placeholder="vault/configvault.enc">
+      </div>
+      <div id="gh-test-result" style="display:none;padding:10px;border-radius:6px;font-size:12px;margin-top:8px;"></div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn-cancel" onclick="testGithubConnection()">Test Connection</button>
+      <button class="btn-cancel" onclick="closeModal('github-modal')">Cancel</button>
+      <button class="btn-save" onclick="saveGithubSettings()">Save & Sync</button>
+    </div>
+  </div>
+</div>
+
+<!-- Toast -->
+<div id="toast"></div>
+
+<!-- ═══════════════════════════════════════════
+     JAVASCRIPT
+════════════════════════════════════════════ -->
+<script>
+// ── CRYPTO HELPERS ──────────────────────────────────────────
+const enc = new TextEncoder();
+const dec = new TextDecoder();
+
+// crypto.subtle requires a secure context (https:// or localhost).
+// When opening as a local file://, we fall back to a lightweight
+// XOR + base64 approach so the app still works offline from OneDrive.
+const hasCrypto = (typeof crypto !== 'undefined' && crypto.subtle && window.isSecureContext);
+
+async function deriveKey(password, salt) {
+  const keyMaterial = await crypto.subtle.importKey('raw', enc.encode(password), 'PBKDF2', false, ['deriveKey']);
+  return crypto.subtle.deriveKey(
+    { name: 'PBKDF2', salt, iterations: 200000, hash: 'SHA-256' },
+    keyMaterial,
+    { name: 'AES-GCM', length: 256 },
+    false,
+    ['encrypt', 'decrypt']
+  );
+}
+
+async function encryptData(data, password) {
+  const json = JSON.stringify(data);
+  if (!hasCrypto) return btoa(unescape(encodeURIComponent(xorObfuscate(json, password))));
+  const salt = crypto.getRandomValues(new Uint8Array(16));
+  const iv = crypto.getRandomValues(new Uint8Array(12));
+  const key = await deriveKey(password, salt);
+  const ct = await crypto.subtle.encrypt({ name: 'AES-GCM', iv }, key, enc.encode(json));
+  const buf = new Uint8Array(salt.length + iv.length + ct.byteLength);
+  buf.set(salt, 0); buf.set(iv, 16); buf.set(new Uint8Array(ct), 28);
+  return btoa(String.fromCharCode(...buf));
+}
+
+async function decryptData(b64, password) {
+  if (!hasCrypto) {
+    try {
+      return JSON.parse(xorObfuscate(decodeURIComponent(escape(atob(b64))), password));
+    } catch { throw new Error('Decrypt failed'); }
+  }
+  const buf = Uint8Array.from(atob(b64), c => c.charCodeAt(0));
+  const salt = buf.slice(0, 16);
+  const iv = buf.slice(16, 28);
+  const ct = buf.slice(28);
+  const key = await deriveKey(password, salt);
+  const pt = await crypto.subtle.decrypt({ name: 'AES-GCM', iv }, key, ct);
+  return JSON.parse(dec.decode(pt));
+}
+
+// Simple XOR obfuscation used only when crypto.subtle is unavailable (file://)
+function xorObfuscate(text, key) {
+  let out = '';
+  for (let i = 0; i < text.length; i++) {
+    out += String.fromCharCode(text.charCodeAt(i) ^ key.charCodeAt(i % key.length));
+  }
+  return out;
+}
+
+async function hashPassword(pw) {
+  if (!hasCrypto) {
+    // Simple deterministic hash for file:// fallback
+    let h = 0x811c9dc5;
+    for (let i = 0; i < pw.length; i++) { h ^= pw.charCodeAt(i); h = (h * 0x01000193) >>> 0; }
+    // Multiple rounds for a tiny bit of stretch
+    for (let r = 0; r < 1000; r++) { h ^= (h >>> 16); h = (h * 0x45d9f3b) >>> 0; }
+    return 'local_' + h.toString(16).padStart(8, '0') + '_' + btoa(pw.split('').reverse().join('')).slice(0,12);
+  }
+  const h = await crypto.subtle.digest('SHA-256', enc.encode(pw));
+  return btoa(String.fromCharCode(...new Uint8Array(h)));
+}
+
+// ── STATE ────────────────────────────────────────────────────
+let masterPassword = null;
+let vaultData = {
+  network: [], isp: [], locks: [], emails: [],
+  family: [], services: [], health: [], school: []
+};
+
+const STORAGE_KEY = 'configvault_data';
+const META_KEY = 'configvault_meta';
+const GH_KEY = 'configvault_github';
+
+// ── GITHUB CONFIG ─────────────────────────────────────────────
+function getGhConfig() {
+  try { return JSON.parse(localStorage.getItem(GH_KEY)); } catch { return null; }
+}
+function saveGhConfig(c) { localStorage.setItem(GH_KEY, JSON.stringify(c)); }
+
+function setSyncStatus(msg, colour) {
+  const el = document.getElementById('sync-status');
+  const txt = document.getElementById('sync-status-text');
+  if (!el || !txt) return;
+  txt.textContent = msg;
+  txt.style.color = colour || 'var(--text3)';
+  el.style.display = '';
+}
+
+// ── GITHUB API ────────────────────────────────────────────────
+async function githubGetFile(cfg) {
+  const url = `https://api.github.com/repos/${cfg.repo}/contents/${cfg.path}`;
+  const r = await fetch(url, {
+    headers: { Authorization: `Bearer ${cfg.token}`, Accept: 'application/vnd.github+json' }
+  });
+  if (r.status === 404) return null;
+  if (!r.ok) throw new Error(`GitHub GET failed: ${r.status}`);
+  return await r.json();
+}
+
+async function githubPutFile(cfg, encryptedContent, sha) {
+  const url = `https://api.github.com/repos/${cfg.repo}/contents/${cfg.path}`;
+  const body = {
+    message: `vault: update ${new Date().toISOString().slice(0,16)}`,
+    content: btoa(unescape(encodeURIComponent(encryptedContent))),
+    committer: { name: 'ConfigVault', email: 'vault@local' }
+  };
+  if (sha) body.sha = sha;
+  const r = await fetch(url, {
+    method: 'PUT',
+    headers: {
+      Authorization: `Bearer ${cfg.token}`,
+      Accept: 'application/vnd.github+json',
+      'Content-Type': 'application/json'
+    },
+    body: JSON.stringify(body)
+  });
+  if (!r.ok) {
+    const err = await r.json().catch(() => ({}));
+    throw new Error(`GitHub PUT failed: ${r.status} ${err.message || ''}`);
+  }
+  return await r.json();
+}
+
+async function pushToGithub(encryptedData) {
+  const cfg = getGhConfig();
+  if (!cfg || !cfg.token) return;
+  setSyncStatus('⟳ Syncing…', 'var(--accent2)');
+  try {
+    const existing = await githubGetFile(cfg);
+    const sha = existing ? existing.sha : undefined;
+    await githubPutFile(cfg, encryptedData, sha);
+    setSyncStatus('✓ Synced ' + new Date().toLocaleTimeString(), 'var(--green)');
+  } catch(e) {
+    setSyncStatus('✗ Sync failed: ' + e.message, 'var(--red)');
+    console.error('GitHub push error:', e);
+  }
+}
+
+async function pullFromGithub() {
+  const cfg = getGhConfig();
+  if (!cfg || !cfg.token) return null;
+  setSyncStatus('⟳ Fetching from GitHub…', 'var(--accent2)');
+  try {
+    const file = await githubGetFile(cfg);
+    if (!file) { setSyncStatus('No remote vault yet', 'var(--text3)'); return null; }
+    // GitHub returns base64 content — decode it
+    const raw = decodeURIComponent(escape(atob(file.content.replace(/\n/g, ''))));
+    setSyncStatus('✓ Fetched ' + new Date().toLocaleTimeString(), 'var(--green)');
+    return raw;
+  } catch(e) {
+    setSyncStatus('✗ Fetch failed: ' + e.message, 'var(--red)');
+    console.error('GitHub pull error:', e);
+    return null;
+  }
+}
+
+async function manualGithubSync() {
+  if (!masterPassword) return;
+  const remote = await pullFromGithub();
+  if (remote) {
+    try {
+      const remoteData = await decryptData(remote, masterPassword);
+      vaultData = remoteData;
+      localStorage.setItem(STORAGE_KEY, remote);
+      renderAll();
+      showToast('Vault synced from GitHub!');
+    } catch {
+      showToast('Sync failed — could not decrypt remote data.', true);
+    }
+  } else {
+    // Nothing remote yet — push local
+    const encrypted = await encryptData(vaultData, masterPassword);
+    await pushToGithub(encrypted);
+    showToast('Local vault pushed to GitHub.');
+  }
+}
+
+// ── AUTH ─────────────────────────────────────────────────────
+function showLogin() {
+  document.getElementById('login-panel').style.display = '';
+  document.getElementById('setup-panel').style.display = 'none';
+  document.getElementById('reset-panel').style.display = 'none';
+}
+
+function showSetup() {
+  document.getElementById('login-panel').style.display = 'none';
+  document.getElementById('setup-panel').style.display = '';
+  document.getElementById('reset-panel').style.display = 'none';
+}
+
+function showReset() {
+  const meta = getMeta();
+  if (!meta || !meta.securityQuestion) {
+    alert('No security question set. Cannot reset password this way.');
+    return;
+  }
+  document.getElementById('reset-q-display').textContent = '❓ ' + meta.securityQuestion;
+  document.getElementById('login-panel').style.display = 'none';
+  document.getElementById('setup-panel').style.display = 'none';
+  document.getElementById('reset-panel').style.display = '';
+}
+
+function getMeta() {
+  try { return JSON.parse(localStorage.getItem(META_KEY)); } catch { return null; }
+}
+
+function saveMeta(m) { localStorage.setItem(META_KEY, JSON.stringify(m)); }
+
+async function setupVault() {
+  const pw = document.getElementById('setup-pw').value;
+  const pw2 = document.getElementById('setup-pw2').value;
+  const sq = document.getElementById('setup-sq').value.trim();
+  const sa = document.getElementById('setup-sa').value.trim().toLowerCase();
+  const err = document.getElementById('setup-error');
+
+  if (!pw || pw.length < 8) { err.textContent = 'Password must be at least 8 characters.'; err.style.display = ''; return; }
+  if (pw !== pw2) { err.textContent = 'Passwords do not match.'; err.style.display = ''; return; }
+  if (!sq || !sa) { err.textContent = 'Security question and answer are required.'; err.style.display = ''; return; }
+
+  const hash = await hashPassword(pw);
+  const answerHash = await hashPassword(sa);
+  saveMeta({ passwordHash: hash, securityQuestion: sq, securityAnswerHash: answerHash });
+
+  // Save GitHub config if provided
+  const ghToken = document.getElementById('setup-gh-token').value.trim();
+  const ghRepo = document.getElementById('setup-gh-repo').value.trim();
+  const ghPath = document.getElementById('setup-gh-path').value.trim();
+  if (ghToken && ghRepo && ghPath) {
+    saveGhConfig({ token: ghToken, repo: ghRepo, path: ghPath });
+  }
+
+  masterPassword = pw;
+  // vaultData already contains seed data from init() — persist it encrypted
+  await persistVault();
+  unlockApp();
+}
+
+async function attemptLogin() {
+  const pw = document.getElementById('master-pw-input').value;
+  const err = document.getElementById('login-error');
+
+  const meta = getMeta();
+  if (!meta) {
+    err.textContent = 'No vault found. Please set up first.';
+    err.style.display = '';
+    return;
+  }
+
+  const hash = await hashPassword(pw);
+  if (hash !== meta.passwordHash) {
+    err.style.display = '';
+    document.getElementById('master-pw-input').value = '';
+    return;
+  }
+
+  err.style.display = 'none';
+  masterPassword = pw;
+
+  // Try GitHub first, fall back to localStorage
+  const ghConfig = getGhConfig();
+  let raw = null;
+  if (ghConfig && ghConfig.token) {
+    raw = await pullFromGithub();
+  }
+  if (!raw) {
+    raw = localStorage.getItem(STORAGE_KEY);
+  }
+
+  if (raw) {
+    try {
+      vaultData = await decryptData(raw, masterPassword);
+      localStorage.setItem(STORAGE_KEY, raw); // keep local in sync
+    } catch {
+      err.textContent = 'Could not decrypt vault. Wrong password or corrupted data.';
+      err.style.display = '';
+      masterPassword = null;
+      return;
+    }
+  }
+
+  unlockApp();
+}
+
+async function doReset() {
+  const answer = document.getElementById('reset-answer').value.trim().toLowerCase();
+  const newPw = document.getElementById('reset-new-pw').value;
+  const err = document.getElementById('reset-error');
+  const meta = getMeta();
+
+  const ansHash = await hashPassword(answer);
+  if (ansHash !== meta.securityAnswerHash) {
+    err.textContent = 'Incorrect answer. Try again.';
+    err.style.display = '';
+    return;
+  }
+
+  if (!newPw || newPw.length < 8) {
+    err.textContent = 'New password must be at least 8 characters.';
+    err.style.display = '';
+    return;
+  }
+
+  // Re-encrypt vault with new password (vault data is lost if not previously stored)
+  const raw = localStorage.getItem(STORAGE_KEY);
+  if (raw && masterPassword) {
+    // already unlocked somehow — shouldn't happen here
+  } else {
+    // Data is encrypted with old password; user must accept data loss or enter old PW
+    // We'll reset meta and clear data for safety
+    vaultData = { network: [], isp: [], locks: [], emails: [], family: [], services: [], health: [], school: [] };
+  }
+
+  const newHash = await hashPassword(newPw);
+  meta.passwordHash = newHash;
+  saveMeta(meta);
+  masterPassword = newPw;
+  await persistVault();
+  showToast('Password reset! Vault cleared for security.');
+  showLogin();
+}
+
+function unlockApp() {
+  document.getElementById('lock-screen').style.display = 'none';
+  document.getElementById('app').style.display = 'block';
+  renderAll();
+}
+
+function lockVault() {
+  masterPassword = null;
+  vaultData = { network: [], isp: [], locks: [], emails: [], family: [], services: [], health: [], school: [] };
+  document.getElementById('lock-screen').style.display = 'flex';
+  document.getElementById('app').style.display = 'none';
+  document.getElementById('master-pw-input').value = '';
+  showLogin();
+}
+
+// ── PERSISTENCE ──────────────────────────────────────────────
+async function persistVault() {
+  if (!masterPassword) return;
+  const encrypted = await encryptData(vaultData, masterPassword);
+  localStorage.setItem(STORAGE_KEY, encrypted);
+  // async push to GitHub — don't await so UI stays snappy
+  pushToGithub(encrypted);
+}
+
+// ── NAVIGATION ───────────────────────────────────────────────
+function showPage(id) {
+  document.querySelectorAll('.section-page').forEach(p => p.classList.remove('active'));
+  document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
+  document.getElementById('page-' + id).classList.add('active');
+  document.getElementById('nav-' + id).classList.add('active');
+}
+
+// ── HELPERS ──────────────────────────────────────────────────
+function uid() { return Date.now().toString(36) + Math.random().toString(36).slice(2); }
+
+function togglePw(inputId, btn) {
+  const inp = document.getElementById(inputId);
+  inp.type = inp.type === 'password' ? 'text' : 'password';
+  btn.textContent = inp.type === 'password' ? '👁' : '🙈';
+}
+
+function showToast(msg, isErr = false) {
+  const t = document.getElementById('toast');
+  t.textContent = msg;
+  t.style.borderColor = isErr ? 'var(--red)' : 'var(--green)';
+  t.style.color = isErr ? 'var(--red)' : 'var(--green)';
+  t.classList.add('show');
+  setTimeout(() => t.classList.remove('show'), 2500);
+}
+
+function copyVal(val) {
+  navigator.clipboard.writeText(val).then(() => showToast('Copied to clipboard!'));
+}
+
+function openModal(id, clearFn) {
+  document.getElementById(id).classList.add('open');
+}
+
+function closeModal(id) {
+  document.getElementById(id).classList.remove('open');
+}
+
+// Secret field helper
+function secretField(key, val, label) {
+  const id = 'sf-' + uid();
+  return `
+    <div class="field-row">
+      <span class="field-key">${label || key}</span>
+      <span class="field-val">
+        <span class="secret-val" id="${id}">••••••••</span>
+        <button class="mini-btn" onclick="toggleSecret('${id}','${escHtml(val)}')">👁</button>
+        <button class="mini-btn" onclick="copyVal('${escHtml(val)}')">⧉</button>
+      </span>
+    </div>`;
+}
+
+function plainField(key, val, label) {
+  if (!val) return '';
+  return `
+    <div class="field-row">
+      <span class="field-key">${label || key}</span>
+      <span class="field-val" style="color:var(--text2)">
+        ${escHtml(val)}
+        <button class="mini-btn" onclick="copyVal('${escHtml(val)}')">⧉</button>
+      </span>
+    </div>`;
+}
+
+function toggleSecret(id, val) {
+  const el = document.getElementById(id);
+  if (el.textContent === '••••••••') {
+    el.textContent = val;
+    el.classList.add('revealed');
+  } else {
+    el.textContent = '••••••••';
+    el.classList.remove('revealed');
+  }
+}
+
+function escHtml(s) {
+  if (!s) return '';
+  return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;').replace(/'/g,'&#39;');
+}
+
+function cardActions(id, section, editFn) {
+  return `<div class="card-actions">
+    <button class="icon-btn" title="Edit" onclick="${editFn}('${id}')">✏️</button>
+    <button class="icon-btn danger" title="Delete" onclick="deleteItem('${section}','${id}')">🗑</button>
+  </div>`;
+}
+
+async function deleteItem(section, id) {
+  if (!confirm('Delete this entry?')) return;
+  vaultData[section] = vaultData[section].filter(x => x.id !== id);
+  await persistVault();
+  renderAll();
+  showToast('Deleted.');
+}
+
+// ── NETWORK ──────────────────────────────────────────────────
+function renderNetwork() {
+  const c = document.getElementById('network-cards');
+  if (!vaultData.network.length) {
+    c.innerHTML = '<p style="color:var(--text3);font-size:13px;">No network devices yet. Click + Add Device.</p>';
+    return;
+  }
+  c.innerHTML = vaultData.network.map(d => {
+    const portRows = (d.ports || '').split('\n').filter(Boolean).map((line, i) => {
+      const dash = line.indexOf('-');
+      const num = dash > -1 ? line.slice(0, dash).trim() : (i + 1);
+      const desc = dash > -1 ? line.slice(dash + 1).trim() : line;
+      return `<tr><td><span class="port-num">${num}</span></td><td style="color:var(--text2)">${escHtml(desc)}</td></tr>`;
+    }).join('');
+
+    return `<div class="card">
+      <div class="card-header">
+        <div>
+          <div class="card-title">${escHtml(d.name)}</div>
+          <div class="card-subtitle">${escHtml(d.brand)} &nbsp;<span class="tag tag-blue">${escHtml(d.type)}</span></div>
+        </div>
+        ${cardActions(d.id, 'network', 'editNetworkDevice')}
+      </div>
+      ${d.ip ? plainField('IP', d.ip, 'IP Address') : ''}
+      ${d.subnet ? plainField('Subnet', d.subnet, 'Subnet') : ''}
+      ${d.user ? plainField('User', d.user, 'Username') : ''}
+      ${d.pass ? secretField('Pass', d.pass, 'Password') : ''}
+      ${d.ssid ? plainField('SSID', d.ssid, 'SSID') : ''}
+      ${d.wifiPass ? secretField('WiFi', d.wifiPass, 'WiFi Pass') : ''}
+      ${d.notes ? plainField('Notes', d.notes, 'Notes') : ''}
+      ${portRows ? `<div class="section-divider" style="margin:14px 0 6px">Port Map</div>
+        <table class="port-table"><thead><tr><th>#</th><th>Connected To</th></tr></thead><tbody>${portRows}</tbody></table>` : ''}
+    </div>`;
+  }).join('');
+}
+
+function saveNetworkDevice() {
+  const id = document.getElementById('nd-edit-id').value || uid();
+  const d = {
+    id,
+    name: document.getElementById('nd-name').value.trim(),
+    brand: document.getElementById('nd-brand').value.trim(),
+    type: document.getElementById('nd-type').value,
+    ip: document.getElementById('nd-ip').value.trim(),
+    subnet: document.getElementById('nd-subnet').value.trim(),
+    user: document.getElementById('nd-user').value.trim(),
+    pass: document.getElementById('nd-pass').value,
+    ssid: document.getElementById('nd-ssid').value.trim(),
+    wifiPass: document.getElementById('nd-wifi-pass').value,
+    notes: document.getElementById('nd-notes').value.trim(),
+    ports: document.getElementById('nd-ports').value.trim()
+  };
+  if (!d.name) { alert('Device name required.'); return; }
+  const idx = vaultData.network.findIndex(x => x.id === id);
+  if (idx > -1) vaultData.network[idx] = d; else vaultData.network.push(d);
+  persistVault(); renderAll(); closeModal('network-device-modal');
+  showToast('Device saved!');
+}
+
+function editNetworkDevice(id) {
+  const d = vaultData.network.find(x => x.id === id);
+  document.getElementById('nd-modal-title').textContent = 'Edit Network Device';
+  document.getElementById('nd-edit-id').value = d.id;
+  document.getElementById('nd-name').value = d.name || '';
+  document.getElementById('nd-brand').value = d.brand || '';
+  document.getElementById('nd-type').value = d.type || 'Router';
+  document.getElementById('nd-ip').value = d.ip || '';
+  document.getElementById('nd-subnet').value = d.subnet || '';
+  document.getElementById('nd-user').value = d.user || '';
+  document.getElementById('nd-pass').value = d.pass || '';
+  document.getElementById('nd-ssid').value = d.ssid || '';
+  document.getElementById('nd-wifi-pass').value = d.wifiPass || '';
+  document.getElementById('nd-notes').value = d.notes || '';
+  document.getElementById('nd-ports').value = d.ports || '';
+  openModal('network-device-modal');
+}
+
+// ── ISP ──────────────────────────────────────────────────────
+function renderISP() {
+  const c = document.getElementById('isp-cards');
+  if (!vaultData.isp.length) {
+    c.innerHTML = '<p style="color:var(--text3);font-size:13px;">No ISP configs yet.</p>'; return;
+  }
+  c.innerHTML = vaultData.isp.map(d => `
+    <div class="card">
+      <div class="card-header">
+        <div>
+          <div class="card-title">${escHtml(d.provider)}</div>
+          <div class="card-subtitle"><span class="tag tag-green">${escHtml(d.type)}</span></div>
+        </div>
+        ${cardActions(d.id, 'isp', 'editISP')}
+      </div>
+      ${d.pppUser ? plainField('pppUser', d.pppUser, 'PPP User') : ''}
+      ${d.pppPass ? secretField('pppPass', d.pppPass, 'PPP Pass') : ''}
+      ${d.pppProto ? plainField('pppProto', d.pppProto, 'Protocol') : ''}
+      ${d.pppAuth ? plainField('pppAuth', d.pppAuth, 'Auth Type') : ''}
+      ${d.vlan ? plainField('vlan', d.vlan, 'VLAN / VID') : ''}
+      ${d.mtu ? plainField('mtu', d.mtu, 'MTU') : ''}
+      ${d.encap ? plainField('encap', d.encap, 'Encapsulation') : ''}
+      ${d.mode ? plainField('mode', d.mode, 'Op. Mode') : ''}
+      ${d.notes ? plainField('notes', d.notes, 'Notes') : ''}
+    </div>`).join('');
+}
+
+function saveISP() {
+  const id = document.getElementById('isp-edit-id').value || uid();
+  const d = {
+    id,
+    provider: document.getElementById('isp-provider').value.trim(),
+    type: document.getElementById('isp-type').value,
+    pppUser: document.getElementById('isp-ppp-user').value.trim(),
+    pppPass: document.getElementById('isp-ppp-pass').value,
+    pppProto: document.getElementById('isp-ppp-proto').value.trim(),
+    pppAuth: document.getElementById('isp-ppp-auth').value.trim(),
+    vlan: document.getElementById('isp-vlan').value.trim(),
+    mtu: document.getElementById('isp-mtu').value.trim(),
+    encap: document.getElementById('isp-encap').value.trim(),
+    mode: document.getElementById('isp-mode').value.trim(),
+    notes: document.getElementById('isp-notes').value.trim()
+  };
+  const idx = vaultData.isp.findIndex(x => x.id === id);
+  if (idx > -1) vaultData.isp[idx] = d; else vaultData.isp.push(d);
+  persistVault(); renderAll(); closeModal('isp-modal');
+  showToast('ISP config saved!');
+}
+
+function editISP(id) {
+  const d = vaultData.isp.find(x => x.id === id);
+  document.getElementById('isp-edit-id').value = d.id;
+  ['provider','pppUser','pppProto','pppAuth','vlan','mtu','encap','mode','notes'].forEach(k => {
+    document.getElementById('isp-' + k.replace(/([A-Z])/g, '-$1').toLowerCase()).value = d[k] || '';
+  });
+  document.getElementById('isp-type').value = d.type || 'Fibre';
+  document.getElementById('isp-ppp-pass').value = d.pppPass || '';
+  openModal('isp-modal');
+}
+
+// ── SMART LOCK ───────────────────────────────────────────────
+function renderLock() {
+  const c = document.getElementById('lock-cards');
+  if (!vaultData.locks.length) {
+    c.innerHTML = '<p style="color:var(--text3);font-size:13px;">No lock entries yet.</p>'; return;
+  }
+  c.innerHTML = vaultData.locks.map(d => {
+    const pinRows = (d.pins || '').split('\n').filter(Boolean).map(line => {
+      const dash = line.indexOf('-');
+      const name = dash > -1 ? line.slice(0, dash).trim() : line;
+      const pin = dash > -1 ? line.slice(dash + 1).trim() : '';
+      const sfId = 'sf-' + uid();
+      return `<tr>
+        <td style="color:var(--text2)">${escHtml(name)}</td>
+        <td>
+          <span class="secret-val" id="${sfId}">••••••</span>
+          <button class="mini-btn" onclick="toggleSecret('${sfId}','${escHtml(pin)}')">👁</button>
+          <button class="mini-btn" onclick="copyVal('${escHtml(pin)}')">⧉</button>
+        </td>
+      </tr>`;
+    }).join('');
+
+    return `<div class="card">
+      <div class="card-header">
+        <div><div class="card-title">${escHtml(d.name)}</div></div>
+        ${cardActions(d.id, 'locks', 'editLock')}
+      </div>
+      ${d.email ? plainField('email', d.email, 'Account') : ''}
+      ${d.pass ? secretField('pass', d.pass, 'Password') : ''}
+      ${pinRows ? `<div class="section-divider" style="margin:14px 0 6px">Door PINs</div>
+        <table class="port-table"><thead><tr><th>User</th><th>PIN</th></tr></thead><tbody>${pinRows}</tbody></table>` : ''}
+    </div>`;
+  }).join('');
+}
+
+function saveLock() {
+  const id = document.getElementById('lock-edit-id').value || uid();
+  const d = {
+    id,
+    name: document.getElementById('lock-name').value.trim(),
+    email: document.getElementById('lock-email').value.trim(),
+    pass: document.getElementById('lock-pass').value,
+    pins: document.getElementById('lock-pins').value.trim()
+  };
+  const idx = vaultData.locks.findIndex(x => x.id === id);
+  if (idx > -1) vaultData.locks[idx] = d; else vaultData.locks.push(d);
+  persistVault(); renderAll(); closeModal('lock-modal');
+  showToast('Lock entry saved!');
+}
+
+function editLock(id) {
+  const d = vaultData.locks.find(x => x.id === id);
+  document.getElementById('lock-edit-id').value = d.id;
+  document.getElementById('lock-name').value = d.name || '';
+  document.getElementById('lock-email').value = d.email || '';
+  document.getElementById('lock-pass').value = d.pass || '';
+  document.getElementById('lock-pins').value = d.pins || '';
+  openModal('lock-modal');
+}
+
+// ── EMAIL ────────────────────────────────────────────────────
+function renderEmail() {
+  const c = document.getElementById('email-cards');
+  if (!vaultData.emails.length) {
+    c.innerHTML = '<p style="color:var(--text3);font-size:13px;">No email accounts yet.</p>'; return;
+  }
+  c.innerHTML = vaultData.emails.map(d => `
+    <div class="card">
+      <div class="card-header">
+        <div>
+          <div class="card-title">${escHtml(d.address)}</div>
+          <div class="card-subtitle"><span class="tag ${d.ssl === 'Yes (Recommended)' ? 'tag-green' : 'tag-yellow'}">${d.ssl === 'Yes (Recommended)' ? 'SSL/TLS' : 'Non-SSL'}</span></div>        </div>
+        ${cardActions(d.id, 'emails', 'editEmail')}
+      </div>
+      ${secretField('pass', d.pass, 'Password')}
+      ${d.imapServer ? plainField('imap', d.imapServer + ':' + d.imapPort, 'IMAP') : ''}
+      ${d.smtpServer ? plainField('smtp', d.smtpServer + ':' + d.smtpPort, 'SMTP') : ''}
+      ${d.pop3Port ? plainField('pop3', d.pop3Port, 'POP3 Port') : ''}
+      ${d.datafile ? plainField('data', d.datafile, 'Data File') : ''}
+      ${d.notes ? plainField('notes', d.notes, 'Notes') : ''}
+    </div>`).join('');
+}
+
+function saveEmail() {
+  const id = document.getElementById('em-edit-id').value || uid();
+  const d = {
+    id,
+    address: document.getElementById('em-address').value.trim(),
+    pass: document.getElementById('em-pass').value,
+    imapServer: document.getElementById('em-imap-server').value.trim(),
+    imapPort: document.getElementById('em-imap-port').value.trim(),
+    smtpServer: document.getElementById('em-smtp-server').value.trim(),
+    smtpPort: document.getElementById('em-smtp-port').value.trim(),
+    pop3Port: document.getElementById('em-pop3-port').value.trim(),
+    ssl: document.getElementById('em-ssl').value,
+    datafile: document.getElementById('em-datafile').value.trim(),
+    notes: document.getElementById('em-notes').value.trim()
+  };
+  const idx = vaultData.emails.findIndex(x => x.id === id);
+  if (idx > -1) vaultData.emails[idx] = d; else vaultData.emails.push(d);
+  persistVault(); renderAll(); closeModal('email-modal');
+  showToast('Email saved!');
+}
+
+function editEmail(id) {
+  const d = vaultData.emails.find(x => x.id === id);
+  document.getElementById('em-edit-id').value = d.id;
+  document.getElementById('em-address').value = d.address || '';
+  document.getElementById('em-pass').value = d.pass || '';
+  document.getElementById('em-imap-server').value = d.imapServer || '';
+  document.getElementById('em-imap-port').value = d.imapPort || '';
+  document.getElementById('em-smtp-server').value = d.smtpServer || '';
+  document.getElementById('em-smtp-port').value = d.smtpPort || '';
+  document.getElementById('em-pop3-port').value = d.pop3Port || '';
+  document.getElementById('em-ssl').value = d.ssl || 'Yes (Recommended)';
+  document.getElementById('em-datafile').value = d.datafile || '';
+  document.getElementById('em-notes').value = d.notes || '';
+  openModal('email-modal');
+}
+
+// ── FAMILY ───────────────────────────────────────────────────
+function renderFamily() {
+  const people = [...new Set(vaultData.family.map(f => f.person).filter(Boolean))].sort();
+  const tabs = document.getElementById('person-tabs');
+  const panels = document.getElementById('family-panels');
+
+  if (!vaultData.family.length) {
+    tabs.innerHTML = '';
+    panels.innerHTML = '<p style="color:var(--text3);font-size:13px;">No family accounts yet.</p>';
+    return;
+  }
+
+  const allPeople = ['All', ...people];
+  let activePerson = tabs.querySelector('.person-tab.active')?.dataset.person || 'All';
+  if (!allPeople.includes(activePerson)) activePerson = 'All';
+
+  tabs.innerHTML = allPeople.map(p => `
+    <div class="person-tab ${p === activePerson ? 'active' : ''}" data-person="${escHtml(p)}" onclick="setPersonTab(this,'${escHtml(p)}')">${escHtml(p)}</div>
+  `).join('');
+
+  panels.innerHTML = allPeople.slice(1).map(person => {
+    const accounts = vaultData.family.filter(f => f.person === person);
+    const isActive = activePerson === 'All' || activePerson === person;
+    return `<div class="person-panel ${isActive ? 'active' : ''}" id="pp-${escHtml(person)}">
+      ${accounts.map(d => {
+        const sqRows = (d.sq || '').split('\n').filter(Boolean).map(line => {
+          const dash = line.indexOf('-');
+          const q = dash > -1 ? line.slice(0, dash).trim() : line;
+          const a = dash > -1 ? line.slice(dash + 1).trim() : '';
+          const sfId = 'sf-' + uid();
+          return `<div class="field-row">
+            <span class="field-key" style="max-width:130px;overflow:hidden;text-overflow:ellipsis" title="${escHtml(q)}">${escHtml(q.length > 20 ? q.slice(0,20)+'…' : q)}</span>
+            <span class="field-val">
+              <span class="secret-val" id="${sfId}">••••••••</span>
+              <button class="mini-btn" onclick="toggleSecret('${sfId}','${escHtml(a)}')">👁</button>
+              <button class="mini-btn" onclick="copyVal('${escHtml(a)}')">⧉</button>
+            </span>
+          </div>`;
+        }).join('');
+
+        return `<div class="card">
+          <div class="card-header">
+            <div>
+              <div class="card-title">${escHtml(d.service)}</div>
+              <div class="card-subtitle">${escHtml(d.person)}</div>
+            </div>
+            ${cardActions(d.id, 'family', 'editFamilyAccount')}
+          </div>
+          ${d.device ? plainField('device', d.device, 'Device') : ''}
+          ${d.user ? plainField('user', d.user, 'Username') : ''}
+          ${d.pass ? secretField('pass', d.pass, 'Password') : ''}
+          ${d.pin ? secretField('pin', d.pin, 'PIN') : ''}
+          ${d.notes ? plainField('notes', d.notes, 'Notes') : ''}
+          ${sqRows ? `<div class="section-divider" style="margin:10px 0 4px;font-size:9px">Security Q&A</div>${sqRows}` : ''}
+        </div>`;
+      }).join('')}
+    </div>`;
+  }).join('');
+}
+
+function setPersonTab(el, person) {
+  document.querySelectorAll('.person-tab').forEach(t => t.classList.remove('active'));
+  el.classList.add('active');
+  document.querySelectorAll('.person-panel').forEach(p => {
+    if (person === 'All') p.classList.add('active');
+    else p.classList.toggle('active', p.id === 'pp-' + person);
+  });
+}
+
+function saveFamilyAccount() {
+  const id = document.getElementById('fa-edit-id').value || uid();
+  const d = {
+    id,
+    person: document.getElementById('fa-person').value.trim(),
+    service: document.getElementById('fa-service').value.trim(),
+    user: document.getElementById('fa-user').value.trim(),
+    pass: document.getElementById('fa-pass').value,
+    pin: document.getElementById('fa-pin').value,
+    device: document.getElementById('fa-device').value.trim(),
+    sq: document.getElementById('fa-sq').value.trim(),
+    notes: document.getElementById('fa-notes').value.trim()
+  };
+  if (!d.person || !d.service) { alert('Person and service are required.'); return; }
+  const idx = vaultData.family.findIndex(x => x.id === id);
+  if (idx > -1) vaultData.family[idx] = d; else vaultData.family.push(d);
+  persistVault(); renderAll(); closeModal('family-modal');
+  showToast('Account saved!');
+}
+
+function editFamilyAccount(id) {
+  const d = vaultData.family.find(x => x.id === id);
+  document.getElementById('fa-edit-id').value = d.id;
+  document.getElementById('fa-person').value = d.person || '';
+  document.getElementById('fa-service').value = d.service || '';
+  document.getElementById('fa-user').value = d.user || '';
+  document.getElementById('fa-pass').value = d.pass || '';
+  document.getElementById('fa-pin').value = d.pin || '';
+  document.getElementById('fa-device').value = d.device || '';
+  document.getElementById('fa-sq').value = d.sq || '';
+  document.getElementById('fa-notes').value = d.notes || '';
+  openModal('family-modal');
+}
+
+// ── SERVICES ─────────────────────────────────────────────────
+function renderServices() {
+  const c = document.getElementById('service-cards');
+  if (!vaultData.services.length) {
+    c.innerHTML = '<p style="color:var(--text3);font-size:13px;">No services yet.</p>'; return;
+  }
+  c.innerHTML = vaultData.services.map(d => `
+    <div class="card">
+      <div class="card-header">
+        <div>
+          <div class="card-title">${escHtml(d.name)}</div>
+          <div class="card-subtitle"><span class="tag tag-blue">${escHtml(d.cat)}</span></div>
+        </div>
+        ${cardActions(d.id, 'services', 'editService')}
+      </div>
+      ${d.user ? plainField('user', d.user, 'Username') : ''}
+      ${d.pass ? secretField('pass', d.pass, 'Password') : ''}
+      ${d.acct ? plainField('acct', d.acct, 'Account #') : ''}
+      ${d.notes ? plainField('notes', d.notes, 'Notes') : ''}
+    </div>`).join('');
+}
+
+function saveService() {
+  const id = document.getElementById('svc-edit-id').value || uid();
+  const d = {
+    id,
+    name: document.getElementById('svc-name').value.trim(),
+    cat: document.getElementById('svc-cat').value,
+    user: document.getElementById('svc-user').value.trim(),
+    pass: document.getElementById('svc-pass').value,
+    acct: document.getElementById('svc-acct').value.trim(),
+    notes: document.getElementById('svc-notes').value.trim()
+  };
+  if (!d.name) { alert('Service name required.'); return; }
+  const idx = vaultData.services.findIndex(x => x.id === id);
+  if (idx > -1) vaultData.services[idx] = d; else vaultData.services.push(d);
+  persistVault(); renderAll(); closeModal('service-modal');
+  showToast('Service saved!');
+}
+
+function editService(id) {
+  const d = vaultData.services.find(x => x.id === id);
+  document.getElementById('svc-edit-id').value = d.id;
+  document.getElementById('svc-name').value = d.name || '';
+  document.getElementById('svc-cat').value = d.cat || 'Other';
+  document.getElementById('svc-user').value = d.user || '';
+  document.getElementById('svc-pass').value = d.pass || '';
+  document.getElementById('svc-acct').value = d.acct || '';
+  document.getElementById('svc-notes').value = d.notes || '';
+  openModal('service-modal');
+}
+
+// ── HEALTH ───────────────────────────────────────────────────
+function renderHealth() {
+  const c = document.getElementById('health-cards');
+  if (!vaultData.health.length) {
+    c.innerHTML = '<p style="color:var(--text3);font-size:13px;">No health portals yet.</p>'; return;
+  }
+  c.innerHTML = vaultData.health.map(d => `
+    <div class="card">
+      <div class="card-header">
+        <div>
+          <div class="card-title">${escHtml(d.name)}</div>
+          <div class="card-subtitle">${escHtml(d.person)}</div>
+        </div>
+        ${cardActions(d.id, 'health', 'editHealth')}
+      </div>
+      ${d.user ? plainField('user', d.user, 'Login') : ''}
+      ${d.pass ? secretField('pass', d.pass, 'Password') : ''}
+      ${d.url ? `<div class="field-row"><span class="field-key">URL</span><span class="field-val"><a href="${escHtml(d.url)}" target="_blank" style="color:var(--accent);font-size:11px">${escHtml(d.url)}</a></span></div>` : ''}
+      ${d.notes ? plainField('notes', d.notes, 'Notes') : ''}
+    </div>`).join('');
+}
+
+function saveHealth() {
+  const id = document.getElementById('hp-edit-id').value || uid();
+  const d = {
+    id,
+    name: document.getElementById('hp-name').value.trim(),
+    person: document.getElementById('hp-person').value.trim(),
+    user: document.getElementById('hp-user').value.trim(),
+    pass: document.getElementById('hp-pass').value,
+    url: document.getElementById('hp-url').value.trim(),
+    notes: document.getElementById('hp-notes').value.trim()
+  };
+  const idx = vaultData.health.findIndex(x => x.id === id);
+  if (idx > -1) vaultData.health[idx] = d; else vaultData.health.push(d);
+  persistVault(); renderAll(); closeModal('health-modal');
+  showToast('Portal saved!');
+}
+
+function editHealth(id) {
+  const d = vaultData.health.find(x => x.id === id);
+  document.getElementById('hp-edit-id').value = d.id;
+  document.getElementById('hp-name').value = d.name || '';
+  document.getElementById('hp-person').value = d.person || '';
+  document.getElementById('hp-user').value = d.user || '';
+  document.getElementById('hp-pass').value = d.pass || '';
+  document.getElementById('hp-url').value = d.url || '';
+  document.getElementById('hp-notes').value = d.notes || '';
+  openModal('health-modal');
+}
+
+// ── SCHOOL ───────────────────────────────────────────────────
+function renderSchool() {
+  const c = document.getElementById('school-cards');
+  if (!vaultData.school.length) {
+    c.innerHTML = '<p style="color:var(--text3);font-size:13px;">No school portals yet.</p>'; return;
+  }
+  c.innerHTML = vaultData.school.map(d => `
+    <div class="card">
+      <div class="card-header">
+        <div>
+          <div class="card-title">${escHtml(d.name)}</div>
+          <div class="card-subtitle">${escHtml(d.school)}</div>
+        </div>
+        ${cardActions(d.id, 'school', 'editSchool')}
+      </div>
+      ${d.user ? plainField('user', d.user, 'Username') : ''}
+      ${d.pass ? secretField('pass', d.pass, 'Password') : ''}
+      ${d.pin ? secretField('pin', d.pin, 'PIN') : ''}
+      ${d.url ? `<div class="field-row"><span class="field-key">URL</span><span class="field-val"><a href="${escHtml(d.url)}" target="_blank" style="color:var(--accent);font-size:11px;word-break:break-all">${escHtml(d.url)}</a></span></div>` : ''}
+      ${d.notes ? plainField('notes', d.notes, 'Notes') : ''}
+    </div>`).join('');
+}
+
+function saveSchool() {
+  const id = document.getElementById('sp-edit-id').value || uid();
+  const d = {
+    id,
+    name: document.getElementById('sp-name').value.trim(),
+    school: document.getElementById('sp-school').value.trim(),
+    user: document.getElementById('sp-user').value.trim(),
+    pass: document.getElementById('sp-pass').value,
+    pin: document.getElementById('sp-pin').value,
+    url: document.getElementById('sp-url').value.trim(),
+    notes: document.getElementById('sp-notes').value.trim()
+  };
+  const idx = vaultData.school.findIndex(x => x.id === id);
+  if (idx > -1) vaultData.school[idx] = d; else vaultData.school.push(d);
+  persistVault(); renderAll(); closeModal('school-modal');
+  showToast('Portal saved!');
+}
+
+function editSchool(id) {
+  const d = vaultData.school.find(x => x.id === id);
+  document.getElementById('sp-edit-id').value = d.id;
+  document.getElementById('sp-name').value = d.name || '';
+  document.getElementById('sp-school').value = d.school || '';
+  document.getElementById('sp-user').value = d.user || '';
+  document.getElementById('sp-pass').value = d.pass || '';
+  document.getElementById('sp-pin').value = d.pin || '';
+  document.getElementById('sp-url').value = d.url || '';
+  document.getElementById('sp-notes').value = d.notes || '';
+  openModal('school-modal');
+}
+
+// ── RENDER ALL ───────────────────────────────────────────────
+function renderAll() {
+  renderNetwork();
+  renderISP();
+  renderLock();
+  renderEmail();
+  renderFamily();
+  renderServices();
+  renderHealth();
+  renderSchool();
+}
+
+// ── SEARCH ───────────────────────────────────────────────────
+function globalSearch(q) {
+  if (!q) {
+    document.querySelectorAll('.card').forEach(c => c.classList.remove('search-hidden'));
+    return;
+  }
+  q = q.toLowerCase();
+  document.querySelectorAll('.card').forEach(card => {
+    const text = card.textContent.toLowerCase();
+    card.classList.toggle('search-hidden', !text.includes(q));
+  });
+}
+
+// ── EXPORT / IMPORT ──────────────────────────────────────────
+function exportVault() {
+  const raw = localStorage.getItem(STORAGE_KEY);
+  const meta = localStorage.getItem(META_KEY);
+  const blob = new Blob([JSON.stringify({ vault: raw, meta })], { type: 'application/json' });
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  a.download = 'configvault-backup-' + new Date().toISOString().slice(0,10) + '.json';
+  a.click();
+  showToast('Backup downloaded!');
+}
+
+function importVault(input) {
+  const file = input.files[0];
+  if (!file) return;
+  const reader = new FileReader();
+  reader.onload = async e => {
+    try {
+      const { vault, meta } = JSON.parse(e.target.result);
+      if (vault) localStorage.setItem(STORAGE_KEY, vault);
+      if (meta) localStorage.setItem(META_KEY, meta);
+      showToast('Import successful! Re-entering vault…');
+      setTimeout(() => {
+        vaultData = { network: [], isp: [], locks: [], emails: [], family: [], services: [], health: [], school: [] };
+        decryptData(vault, masterPassword).then(d => { vaultData = d; renderAll(); });
+      }, 800);
+    } catch { showToast('Import failed — invalid file.', true); }
+  };
+  reader.readAsText(file);
+  input.value = '';
+}
+
+// ── KEYBOARD ─────────────────────────────────────────────────
+document.addEventListener('keydown', e => {
+  if (e.key === 'Enter' && document.getElementById('master-pw-input') === document.activeElement) attemptLogin();
+  if (e.key === 'Escape') document.querySelectorAll('.modal-overlay.open').forEach(m => m.classList.remove('open'));
+});
+
+// ── SEED DATA ────────────────────────────────────────────────
+const SEED_DATA = {
+  network: [
+    {
+      id: 'nd-router',
+      name: 'Main Router / Wall Plate Switch',
+      brand: 'Ubiquiti Unifi Cloud Gateway Ultra',
+      type: 'Router',
+      ip: '192.168.1.1',
+      subnet: '255.255.255.0',
+      user: 'Admin',
+      pass: '',
+      ssid: 'G&D',
+      wifiPass: '',
+      notes: 'Unifi Account: gaylene.dave@solly.co.nz / Username: solman',
+      ports: '1 - Internet Router\n2 - Alarm System IP Module\n3 - Office Extension – Unifi 5 Port Switch\n4 - Media Extension – Unifi 5 Port Switch\n5 - Jacob Room Wall Plate – Sony Bravia TV\n6 - Disconnected from Wall – Lounge TV location (Under house)\n7 - POE to Unifi AP AC LR in Hallway\n8 - Paige Room Wall Plate – no device connected\n* Cat5E to NAS Location (bottom of linen cupboard) disconnected at main wall plate'
+    },
+    {
+      id: 'nd-office-sw',
+      name: 'Office Extension Switch',
+      brand: 'Unifi 5 Port Switch',
+      type: 'Switch',
+      ip: '',
+      subnet: '',
+      user: '',
+      pass: '',
+      ssid: '',
+      wifiPass: '',
+      notes: 'Located in office',
+      ports: '1 - Uplink to Main Switch\n2 - Dave Laptop Station\n3 - Main PC\n4 - Xbox 360\n5 - '
+    },
+    {
+      id: 'nd-media-sw',
+      name: 'Media Extension Switch',
+      brand: 'Unifi 5 Port Switch',
+      type: 'Switch',
+      ip: '',
+      subnet: '',
+      user: '',
+      pass: '',
+      ssid: '',
+      wifiPass: '',
+      notes: 'Located in media area',
+      ports: '1 - Uplink to Main Switch\n2 - Samsung Series 7 Smart TV\n3 - XBOX One Console\n4 - \n5 - Media PC'
+    },
+    {
+      id: 'nd-ap',
+      name: 'Access Point – Hallway',
+      brand: 'Unifi AP AC LR',
+      type: 'Access Point',
+      ip: '',
+      subnet: '',
+      user: '',
+      pass: '',
+      ssid: '',
+      wifiPass: '',
+      notes: 'POE powered from port 7 of main switch. Unifi Network account: gaylene.dave@solly.co.nz / Username: solman',
+      ports: ''
+    }
+  ],
+  isp: [
+    {
+      id: 'isp-spark',
+      provider: 'Spark',
+      type: 'Fibre',
+      pppUser: 'user@spark.co.nz',
+      pppPass: '',
+      pppProto: 'PPPoE',
+      pppAuth: 'PAP',
+      vlan: '10',
+      mtu: '1500',
+      encap: '802.1Q',
+      mode: 'MDI/MDIX',
+      notes: 'PPP mode: Always on (dial on demand disabled). PCP marking: 0. MTU can be set to Auto or 1500. PPP username/password cannot be blank even if generic values are used. Spark account: Gaylene.dave@xtra.co.nz | MySpark: gaylene.dave@solly.co.nz'
+    }
+  ],
+  locks: [
+    {
+      id: 'lock-schlage',
+      name: 'Schlage Smart Lock – Front Door',
+      email: 'solman-nz@hotmail.com',
+      pass: '',
+      pins: 'MS\\admin - 951357\nDave - 753159\nGaylene - 027542\nEmma - 159753\nPaige - 132580\nJacob - 085213\nSimpsons - \nDenyse - \nBinty - 963353\nChrissy - '
+    }
+  ],
+  emails: [
+    {
+      id: 'em-gaylene',
+      address: 'gaylene.dave@solly.co.nz',
+      pass: '',
+      imapServer: 'cp-fp01.syd02.ds.network',
+      imapPort: '993',
+      smtpServer: 'cp-fp01.syd02.ds.network',
+      smtpPort: '465',
+      pop3Port: '995',
+      ssl: 'Yes (Recommended)',
+      datafile: 'E:/user data/documents/outlook files',
+      notes: 'Non-SSL fallback: mail.solly.co.nz | IMAP 143 | POP3 110 | SMTP 587. Server ref: lp02.domains4les.net.nz'
+    },
+    {
+      id: 'em-dave',
+      address: 'dave@solly.co.nz',
+      pass: '',
+      imapServer: 'cp-fp01.syd02.ds.network',
+      imapPort: '993',
+      smtpServer: 'cp-fp01.syd02.ds.network',
+      smtpPort: '465',
+      pop3Port: '995',
+      ssl: 'Yes (Recommended)',
+      datafile: 'E:/user data/documents/outlook files',
+      notes: 'Non-SSL fallback: mail.solly.co.nz | IMAP 143 | POP3 110 | SMTP 587'
+    },
+    {
+      id: 'em-crazy-email',
+      address: 'gaylene.dave@solly.co.nz (Crazy Domains Hosting)',
+      pass: '',
+      imapServer: '',
+      imapPort: '',
+      smtpServer: '',
+      smtpPort: '',
+      pop3Port: '',
+      ssl: 'Yes (Recommended)',
+      datafile: '',
+      notes: 'Crazy Domains email hosting – to be merged to other account. Login username: gaylene.dave@xtra.co.nz'
+    },
+    {
+      id: 'em-crazy-domain',
+      address: 'Domain Hosting (Crazy Domains)',
+      pass: '',
+      imapServer: '',
+      imapPort: '',
+      smtpServer: '',
+      smtpPort: '',
+      pop3Port: '',
+      ssl: 'Yes (Recommended)',
+      datafile: '',
+      notes: 'Domain hosting account. Login: gaylene.dave@xtra.co.nz / Username: Sollymail'
+    }
+  ],
+  family: [
+    // ── DAVE ──
+    {
+      id: 'fa-dave-apple',
+      person: 'Dave',
+      service: 'Apple ID',
+      user: 'solman-nz@hotmail.com',
+      pass: '',
+      pin: '',
+      device: '',
+      sq: 'What was the name of your best friend in highschool - Kendall\nWhat was the model of your first car - Barina\nWhat was the first name of your first boss - Roger',
+      notes: ''
+    },
+    {
+      id: 'fa-dave-win10',
+      person: 'Dave',
+      service: 'Windows 10',
+      user: '',
+      pass: '',
+      pin: '',
+      device: 'Main PC',
+      sq: '',
+      notes: 'Product Key: YTMG3-N6DKC-DKB77-7M9GH-8HVX7'
+    },
+    {
+      id: 'fa-dave-google',
+      person: 'Dave',
+      service: 'Google',
+      user: 'solman-nz@hotmail.com',
+      pass: '',
+      pin: '',
+      device: '',
+      sq: '',
+      notes: ''
+    },
+    {
+      id: 'fa-dave-samsung',
+      person: 'Dave',
+      service: 'Samsung',
+      user: 'solman-nz@hotmail.com',
+      pass: '',
+      pin: '',
+      device: '',
+      sq: '',
+      notes: ''
+    },
+    {
+      id: 'fa-dave-nintendo',
+      person: 'Dave',
+      service: 'Nintendo',
+      user: 'solman-nz@hotmail.com',
+      pass: '',
+      pin: '',
+      device: '',
+      sq: '',
+      notes: ''
+    },
+    {
+      id: 'fa-dave-steam',
+      person: 'Dave',
+      service: 'Steam',
+      user: 'solman-nz@hotmail.com',
+      pass: '',
+      pin: '',
+      device: '',
+      sq: '',
+      notes: 'Username: Solmannz'
+    },
+    {
+      id: 'fa-dave-ea',
+      person: 'Dave',
+      service: 'EA Play',
+      user: 'solman-nz@hotmail.com',
+      pass: '',
+      pin: '',
+      device: '',
+      sq: '',
+      notes: ''
+    },
+    {
+      id: 'fa-dave-wot',
+      person: 'Dave',
+      service: 'World of Trucks',
+      user: 'solman-nz@hotmail.com',
+      pass: '',
+      pin: '',
+      device: '',
+      sq: '',
+      notes: ''
+    },
+    // ── GAYLENE ──
+    {
+      id: 'fa-gaylene-apple',
+      person: 'Gaylene',
+      service: 'Apple ID',
+      user: 'gaylene.dave@solly.co.nz',
+      pass: '',
+      pin: '2109',
+      device: 'iPhone 13 & iPad mini4',
+      sq: '',
+      notes: ''
+    },
+    {
+      id: 'fa-gaylene-microsoft',
+      person: 'Gaylene',
+      service: 'Microsoft / OneDrive',
+      user: 'gaylene.dave@solly.co.nz',
+      pass: '',
+      pin: '',
+      device: '',
+      sq: '',
+      notes: 'OneDrive login same as Microsoft login'
+    },
+    {
+      id: 'fa-gaylene-fb',
+      person: 'Gaylene',
+      service: 'Facebook',
+      user: 'gaylene.dave@solly.co.nz',
+      pass: '',
+      pin: '',
+      device: '',
+      sq: '',
+      notes: ''
+    },
+    {
+      id: 'fa-gaylene-spotify',
+      person: 'Gaylene',
+      service: 'Spotify',
+      user: 'gaylene@solly.co.nz',
+      pass: '',
+      pin: '',
+      device: '',
+      sq: '',
+      notes: ''
+    },
+    {
+      id: 'fa-gaylene-ami',
+      person: 'Gaylene',
+      service: 'AMI Insurance',
+      user: 'gaylene.dave@solly.co.nz',
+      pass: '',
+      pin: '',
+      device: '',
+      sq: '',
+      notes: ''
+    },
+    {
+      id: 'fa-gaylene-spark',
+      person: 'Gaylene',
+      service: 'Spark',
+      user: 'gaylene.dave@xtra.co.nz',
+      pass: '',
+      pin: '',
+      device: '',
+      sq: '',
+      notes: ''
+    },
+    {
+      id: 'fa-gaylene-myspark',
+      person: 'Gaylene',
+      service: 'MySpark',
+      user: 'gaylene.dave@solly.co.nz',
+      pass: '',
+      pin: '',
+      device: '',
+      sq: '',
+      notes: ''
+    },
+    // ── EMMA ──
+    {
+      id: 'fa-emma-apple',
+      person: 'Emma',
+      service: 'Apple ID',
+      user: 'ejsolly@icloud.com',
+      pass: '',
+      pin: '',
+      device: 'iPad Mini 5 / iPhone 17',
+      sq: 'Name of first pet - Crookshanks\nFathers Middle name - Kenning\nYoungest child\'s name - Jacob',
+      notes: 'Lock code stored separately'
+    },
+    {
+      id: 'fa-emma-laptop',
+      person: 'Emma',
+      service: 'Dell Laptop Login',
+      user: 'emma@solly.co.nz',
+      pass: '',
+      pin: '',
+      device: 'Dell Latitude E7470 (EJS-Laptop)',
+      sq: '',
+      notes: 'Administrator account: solman-nz@hotmail.com. Device name: EJS-Laptop'
+    },
+    {
+      id: 'fa-emma-xbox',
+      person: 'Emma',
+      service: 'Xbox',
+      user: 'emma@solly.co.nz',
+      pass: '',
+      pin: '',
+      device: '',
+      sq: '',
+      notes: ''
+    },
+    {
+      id: 'fa-emma-banking',
+      person: 'Emma',
+      service: 'Banking',
+      user: '',
+      pass: '',
+      pin: '',
+      device: '',
+      sq: 'Name of first pet - Crookshanks\nFathers Middle name - Kenning\nYoungest child\'s name - Jacob',
+      notes: 'Account number: 2290013'
+    },
+    // ── PAIGE ──
+    {
+      id: 'fa-paige-apple',
+      person: 'Paige',
+      service: 'Apple ID',
+      user: 'paigesolly@icloud.com',
+      pass: '',
+      pin: '',
+      device: 'iPhone 12',
+      sq: 'First Pet - Crookshanks\nDream Job - Surgeon\nCity Parents Met - Hamilton',
+      notes: 'Phone: +6421907847'
+    },
+    {
+      id: 'fa-paige-email',
+      person: 'Paige',
+      service: 'Email (Solly)',
+      user: 'paige@solly.co.nz',
+      pass: '',
+      pin: '',
+      device: '',
+      sq: '',
+      notes: ''
+    },
+    {
+      id: 'fa-paige-google',
+      person: 'Paige',
+      service: 'Google',
+      user: 'pesolly',
+      pass: '',
+      pin: '',
+      device: '',
+      sq: '',
+      notes: ''
+    },
+    {
+      id: 'fa-paige-xbox',
+      person: 'Paige',
+      service: 'Xbox',
+      user: 'paige@solly.co.nz',
+      pass: '',
+      pin: '',
+      device: '',
+      sq: '',
+      notes: ''
+    },
+    {
+      id: 'fa-paige-airpoints',
+      person: 'Paige',
+      service: 'Air New Zealand Airpoints',
+      user: 'paige@solly.co.nz',
+      pass: '',
+      pin: '',
+      device: '',
+      sq: '',
+      notes: 'Membership number: 8867558'
+    },
+    {
+      id: 'fa-paige-money',
+      person: 'Paige',
+      service: 'Paige Money Manager',
+      user: '',
+      pass: '',
+      pin: '',
+      device: '',
+      sq: 'What is my favourite skill - Aerial\nWhat school did I attend - Hamilton West\nWhat is my fathers middle name - Kenning',
+      notes: 'Account: 2290016 2408 | Account ref: 38-9020-0038656-01 | IRD#: 99-852-240'
+    },
+    {
+      id: 'fa-paige-realme',
+      person: 'Paige',
+      service: 'Realme',
+      user: 'paigesolly@icloud.com',
+      pass: '',
+      pin: '',
+      device: '',
+      sq: 'Name of first suburb - Fitzroy\nOldest sisters birth month and year - February 2006\nBest friend in Primary - Jean',
+      notes: ''
+    },
+    {
+      id: 'fa-paige-aa',
+      person: 'Paige',
+      service: 'AA',
+      user: 'paige.solly8@gmail.com',
+      pass: '',
+      pin: '',
+      device: '',
+      sq: '',
+      notes: 'Membership number: 3083 2613 5670 9392'
+    },
+    // ── JACOB ──
+    {
+      id: 'fa-jacob-apple',
+      person: 'Jacob',
+      service: 'Apple ID',
+      user: 'jksolly@icloud.com',
+      pass: '',
+      pin: '',
+      device: 'iPad 7th Gen / iPhone 11 Pro',
+      sq: 'First pet - Zeus\nChildhood nickname - Jake\nParents meet - Hamilton',
+      notes: ''
+    },
+    {
+      id: 'fa-jacob-money',
+      person: 'Jacob',
+      service: 'Jacob Money Manager',
+      user: '',
+      pass: '',
+      pin: '',
+      device: '',
+      sq: 'My fathers middle name - Kenning\nWhat is my favourite card game - One Piece\nWhat primary school did I attend - Hamilton West',
+      notes: 'Account: 2290023 4268'
+    },
+    {
+      id: 'fa-jacob-realme',
+      person: 'Jacob',
+      service: 'Realme',
+      user: 'jksolly@icloud.com',
+      pass: '',
+      pin: '',
+      device: '',
+      sq: 'Name of first suburb - Bell Block\nOldest sisters birth month and year - February 2006\nBest friend in Primary - Alex',
+      notes: ''
+    },
+    {
+      id: 'fa-jacob-microsoft',
+      person: 'Jacob',
+      service: 'Microsoft',
+      user: 'jacob@solly.co.nz',
+      pass: '',
+      pin: '',
+      device: '',
+      sq: '',
+      notes: 'Username visible in account settings'
+    },
+    {
+      id: 'fa-jacob-steam',
+      person: 'Jacob',
+      service: 'Steam',
+      user: 'W0lfnut',
+      pass: '',
+      pin: '',
+      device: '',
+      sq: '',
+      notes: 'Account Name: W0lfnut'
+    }
+  ],
+  services: [
+    {
+      id: 'svc-spotify',
+      name: 'Spotify',
+      cat: 'Entertainment',
+      user: 'gaylene@solly.co.nz',
+      pass: '',
+      acct: '',
+      notes: 'Family account under Gaylene'
+    },
+    {
+      id: 'svc-google',
+      name: 'Google',
+      cat: 'Cloud / Storage',
+      user: 'solman-nz@hotmail.com',
+      pass: '',
+      acct: '',
+      notes: 'Primary Google account (Dave)'
+    },
+    {
+      id: 'svc-samsung',
+      name: 'Samsung',
+      cat: 'Other',
+      user: 'solman-nz@hotmail.com',
+      pass: '',
+      acct: '',
+      notes: ''
+    },
+    {
+      id: 'svc-nintendo',
+      name: 'Nintendo',
+      cat: 'Gaming',
+      user: 'solman-nz@hotmail.com',
+      pass: '',
+      acct: '',
+      notes: ''
+    },
+    {
+      id: 'svc-steam',
+      name: 'Steam',
+      cat: 'Gaming',
+      user: 'solman-nz@hotmail.com',
+      pass: '',
+      acct: '',
+      notes: 'Username: Solmannz'
+    },
+    {
+      id: 'svc-ea',
+      name: 'EA Play',
+      cat: 'Gaming',
+      user: 'solman-nz@hotmail.com',
+      pass: '',
+      acct: '',
+      notes: ''
+    },
+    {
+      id: 'svc-wot',
+      name: 'World of Trucks',
+      cat: 'Gaming',
+      user: 'solman-nz@hotmail.com',
+      pass: '',
+      acct: '',
+      notes: ''
+    },
+    {
+      id: 'svc-ami',
+      name: 'AMI Insurance',
+      cat: 'Insurance',
+      user: 'gaylene.dave@solly.co.nz',
+      pass: '',
+      acct: '',
+      notes: ''
+    },
+    {
+      id: 'svc-crazydomains',
+      name: 'Crazy Domains',
+      cat: 'Cloud / Storage',
+      user: 'gaylene.dave@xtra.co.nz',
+      pass: '',
+      acct: '',
+      notes: 'Email hosting: gaylene.dave@solly.co.nz (to be merged). Domain hosting username: Sollymail'
+    },
+    {
+      id: 'svc-airpoints',
+      name: 'Air NZ Airpoints (Paige)',
+      cat: 'Other',
+      user: 'paige@solly.co.nz',
+      pass: '',
+      acct: '8867558',
+      notes: 'AA Membership also: 3083 2613 5670 9392'
+    }
+  ],
+  health: [
+    {
+      id: 'hp-paige',
+      name: 'My Health Records',
+      person: 'Paige',
+      user: 'paigesolly@icloud.com',
+      pass: '',
+      url: '',
+      notes: ''
+    },
+    {
+      id: 'hp-emma',
+      name: 'My Health Records',
+      person: 'Emma',
+      user: 'ejsolly@icloud.com',
+      pass: '',
+      url: '',
+      notes: ''
+    },
+    {
+      id: 'hp-gaylene',
+      name: 'My Health Records',
+      person: 'Gaylene',
+      user: 'gaylene@solly.co.nz',
+      pass: '',
+      url: '',
+      notes: ''
+    },
+    {
+      id: 'hp-jacob',
+      name: 'My Health Records',
+      person: 'Jacob',
+      user: 'jksolly@icloud.com',
+      pass: '',
+      url: '',
+      notes: ''
+    }
+  ],
+  school: [
+    {
+      id: 'sp-kamar',
+      name: 'Kamar Portal',
+      school: 'Rototuna Jnr High School',
+      user: 'jacobsolly',
+      pass: '',
+      pin: '',
+      url: 'https://rjhs.school.kiwi/index.php/home',
+      notes: 'Jacob\'s student portal'
+    },
+    {
+      id: 'sp-kindo',
+      name: 'Kindo Portal',
+      school: 'Rototuna Jnr High School',
+      user: 'gaylene.dave@solly.co.nz',
+      pass: '',
+      pin: '',
+      url: '',
+      notes: 'Parent payment portal'
+    },
+    {
+      id: 'sp-schoology',
+      name: 'Schoology',
+      school: 'Rototuna Jnr High School',
+      user: 'david.solly021907847',
+      pass: '',
+      pin: '',
+      url: 'https://rototuna.schoology.com/parent/home',
+      notes: 'Parent portal'
+    },
+    {
+      id: 'sp-skynow',
+      name: 'Skynow',
+      school: 'Rototuna Jnr High School',
+      user: 'gaylene.dave@solly.co.nz',
+      pass: '',
+      pin: '',
+      url: '',
+      notes: ''
+    }
+  ]
+};
+
+// ── SYNC BUTTON HANDLER ──────────────────────────────────────
+function handleSyncBtn() {
+  const cfg = getGhConfig();
+  if (!cfg || !cfg.token) {
+    openGithubSettings();
+  } else {
+    manualGithubSync();
+  }
+}
+
+// ── GITHUB SETTINGS UI ───────────────────────────────────────
+function openGithubSettings() {
+  const cfg = getGhConfig();
+  document.getElementById('gh-token-input').value = cfg ? cfg.token : '';
+  document.getElementById('gh-repo-input').value = cfg ? cfg.repo : 'solman-nz-ux/Projects';
+  document.getElementById('gh-path-input').value = cfg ? cfg.path : 'vault/configvault.enc';
+  document.getElementById('gh-test-result').style.display = 'none';
+  openModal('github-modal');
+}
+
+async function testGithubConnection() {
+  const cfg = {
+    token: document.getElementById('gh-token-input').value.trim(),
+    repo: document.getElementById('gh-repo-input').value.trim(),
+    path: document.getElementById('gh-path-input').value.trim()
+  };
+  const res = document.getElementById('gh-test-result');
+  res.style.display = '';
+  res.style.background = 'var(--bg3)';
+  res.style.color = 'var(--text2)';
+  res.textContent = 'Testing connection…';
+  try {
+    const r = await fetch(`https://api.github.com/repos/${cfg.repo}`, {
+      headers: { Authorization: `Bearer ${cfg.token}`, Accept: 'application/vnd.github+json' }
+    });
+    if (r.ok) {
+      const data = await r.json();
+      res.style.color = 'var(--green)';
+      res.textContent = `✓ Connected to ${data.full_name} (${data.private ? 'private' : 'public'})`;
+    } else {
+      res.style.color = 'var(--red)';
+      res.textContent = `✗ Failed (${r.status}) — check your token and repo name`;
+    }
+  } catch(e) {
+    res.style.color = 'var(--red)';
+    res.textContent = '✗ Network error: ' + e.message;
+  }
+}
+
+async function saveGithubSettings() {
+  const cfg = {
+    token: document.getElementById('gh-token-input').value.trim(),
+    repo: document.getElementById('gh-repo-input').value.trim(),
+    path: document.getElementById('gh-path-input').value.trim()
+  };
+  if (!cfg.token || !cfg.repo || !cfg.path) {
+    showToast('All GitHub fields are required.', true); return;
+  }
+  saveGhConfig(cfg);
+  closeModal('github-modal');
+  showToast('GitHub settings saved — syncing now…');
+  // Push current vault immediately
+  if (masterPassword) {
+    const encrypted = await encryptData(vaultData, masterPassword);
+    await pushToGithub(encrypted);
+  }
+}
+
+// ── INIT ─────────────────────────────────────────────────────
+(function init() {
+  const meta = getMeta();
+  if (!meta) {
+    // First run — pre-load seed data into vaultData so it's ready after setup
+    vaultData = JSON.parse(JSON.stringify(SEED_DATA));
+    showSetup();
+  } else {
+    showLogin();
+    // Show sync config status on login screen
+    const cfg = getGhConfig();
+    if (cfg && cfg.token) {
+      setSyncStatus('GitHub sync configured ✓', 'var(--green)');
+    }
+  }
+})();
+</script>
+</body>
+</html>
